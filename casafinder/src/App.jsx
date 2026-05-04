@@ -96,17 +96,17 @@ function fileToBase64(file) {
 }
 
 async function extractFromText(text, url) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({
-      model:"claude-sonnet-4-20250514", max_tokens:1000,
-      messages:[{role:"user", content:`Eres un asistente que extrae datos de anuncios inmobiliarios españoles.\n\nTexto del anuncio:\n${text}\n\nURL: ${url||"no proporcionada"}\n\nDevuelve SOLO JSON válido sin markdown:\n{"title":"","address":"","zone":"","price":null,"size":null,"rooms":null,"bathrooms":null,"trastero":false,"garaje":false,"terraza":false,"distanciaKm":null,"comunidad":null,"notes":"","error":null}\n\nReglas: price/size solo números, trastero/garaje/terraza true solo si se mencionan explícitamente, notes resumen breve, null si no aparece.`}],
-    }),
-  });
-  const d=await res.json();
-  const t=d.content?.map(b=>b.text||"").join("")||"";
-  try { return JSON.parse(t.replace(/```json|```/g,"").trim()); }
-  catch { return {error:"No se pudo extraer",title:"",address:"",zone:"",price:null,size:null,rooms:null,bathrooms:null,trastero:false,garaje:false,terraza:false,distanciaKm:null,comunidad:null,notes:""}; }
+  try {
+    const res = await fetch("/api/extraer", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, url }),
+    });
+    if (!res.ok) throw new Error("Error " + res.status);
+    return await res.json();
+  } catch(err) {
+    return {error:"Error al extraer: "+err.message,title:"",address:"",zone:"",price:null,size:null,rooms:null,bathrooms:null,trastero:false,garaje:false,terraza:false,distanciaKm:null,comunidad:null,notes:""};
+  }
 }
 
 function ScoreChip({pts, size=52}) {
