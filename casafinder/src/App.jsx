@@ -100,12 +100,13 @@ async function extractFromText(text, url) {
     const res = await fetch("/api/extraer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, url }),
+      body: JSON.stringify({ text: text || "", url: url || "" }),
     });
-    if (!res.ok) throw new Error("Error " + res.status);
-    return await res.json();
+    const data = await res.json();
+    if (!res.ok) return { error: data.error || "Error " + res.status, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
+    return data;
   } catch(err) {
-    return {error:"Error al extraer: "+err.message,title:"",address:"",zone:"",price:null,size:null,rooms:null,bathrooms:null,trastero:false,garaje:false,terraza:false,distanciaKm:null,comunidad:null,notes:""};
+    return { error: "No se pudo conectar: " + err.message, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
   }
 }
 
