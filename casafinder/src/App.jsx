@@ -97,16 +97,31 @@ function fileToBase64(file) {
 
 async function extractFromText(text, url) {
   try {
-    const res = await fetch("/api/extraer", {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: text || "", url: url || "" }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": "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",
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{
+          role: "user",
+          content: "Eres un asistente que extrae datos de anuncios inmobiliarios españoles.\n\nTexto del anuncio:\n" + (text || "") + "\n\nURL: " + (url || "no proporcionada") + "\n\nDevuelve SOLO JSON válido sin markdown ni texto adicional:\n{\"title\":\"\",\"address\":\"\",\"zone\":\"\",\"price\":null,\"size\":null,\"rooms\":null,\"bathrooms\":null,\"trastero\":false,\"garaje\":false,\"terraza\":false,\"distanciaKm\":null,\"comunidad\":null,\"notes\":\"\",\"error\":null}\n\nReglas: price/size solo números sin símbolos, trastero/garaje/terraza true solo si se mencionan explícitamente, notes resumen breve, null si no aparece.",
+        }],
+      }),
     });
     const data = await res.json();
-    if (!res.ok) return { error: data.error || "Error " + res.status, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
-    return data;
+    const textResponse = data.content?.map(b => b.text || "").join("") || "";
+    try {
+      return JSON.parse(textResponse.replace(/```json|```/g, "").trim());
+    } catch {
+      return { error: "No se pudo parsear", title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
+    }
   } catch(err) {
-    return { error: "No se pudo conectar: " + err.message, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
+    return { error: "Error: " + err.message, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
   }
 }
 
