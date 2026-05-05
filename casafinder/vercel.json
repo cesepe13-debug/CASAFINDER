@@ -1,5 +1,69 @@
-{
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
-  ]
+export const config = { runtime: "edge" };
+
+export default async function handler(req) {
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      status: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      },
+    });
+  }
+
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const { text, url } = await req.json();
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+
+  if (!apiKey) {
+    return new Response(JSON.stringify({ error: "API key no configurada" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1000,
+      messages: [{
+        role: "user",
+        content: "Eres un asistente que extrae datos de anuncios inmobiliarios españoles.\n\nTexto del anuncio:\n" + (text || "") + "\n\nURL: " + (url || "no proporcionada") + "\n\nDevuelve SOLO JSON válido sin markdown ni texto adicional:\n{\"title\":\"\",\"address\":\"\",\"zone\":\"\",\"price\":null,\"size\":null,\"rooms\":null,\"bathrooms\":null,\"trastero\":false,\"garaje\":false,\"terraza\":false,\"distanciaKm\":null,\"comunidad\":null,\"notes\":\"\",\"error\":null}\n\nReglas: price/size solo números sin símbolos, trastero/garaje/terraza true solo si se mencionan explícitamente, notes resumen breve, null si no aparece.",
+      }],
+    }),
+  });
+
+  const data = await response.json();
+  const textResponse = data.content?.map(b => b.text || "").join("") || "";
+
+  try {
+    const parsed = JSON.parse(textResponse.replace(/```json|```/g, "").trim());
+    return new Response(JSON.stringify(parsed), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  } catch {
+    return new Response(JSON.stringify({
+      error: "No se pudo parsear", title: "", address: "", zone: "",
+      price: null, size: null, rooms: null, bathrooms: null,
+      trastero: false, garaje: false, terraza: false,
+      distanciaKm: null, comunidad: null, notes: "",
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+    });
+  }
 }
