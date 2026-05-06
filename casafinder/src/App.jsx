@@ -204,7 +204,7 @@ function PropertyModal({prop, onSave, onClose}) {
   );
 
   return (
-    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-box">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
           <h2 style={{fontFamily:"Playfair Display",fontSize:22,fontWeight:700}}>{prop?"Editar propiedad":"Nueva propiedad"}</h2>
@@ -266,7 +266,12 @@ function PropertyModal({prop, onSave, onClose}) {
               </select>
             </div>
             {field("Dirección","address","C/ ...")}
-            {field("Zona / municipio","zone","Marbella, San Pedro…")}
+            <div><label>Zona / municipio</label>
+              <select value={form.zone||""} onChange={e=>s("zone",e.target.value)}>
+                <option value="">— Selecciona —</option>
+                {["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"].map(z=><option key={z} value={z}>{z}</option>)}
+              </select>
+            </div>
             {field("URL del anuncio","url","https://idealista.com/...")}
             <div><label>Características</label>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -277,9 +282,9 @@ function PropertyModal({prop, onSave, onClose}) {
             </div>
             <div><label>Certificado energético</label>
               <div style={{display:"flex",gap:8}}>
-                {["","Sí","En trámite"].map(v=>(
-                  <div key={v} className={`toggle-bool${form.certEnergetico===v&&v?" on":""}`} onClick={()=>s("certEnergetico",v)} style={{fontSize:13}}>
-                    {v||"No especificado"}
+                {["Sí","En trámite"].map(v=>(
+                  <div key={v} className={`toggle-bool${form.certEnergetico===v?" on":""}`} onClick={()=>s("certEnergetico",form.certEnergetico===v?"":v)} style={{fontSize:13}}>
+                    {form.certEnergetico===v?"✓":""} {v}
                   </div>
                 ))}
               </div>
@@ -308,7 +313,7 @@ function CriteriaModal({criteria, onChange, onClose}) {
   const [loc,setLoc]=useState(criteria.map(c=>({...c})));
   const set=(i,k,v)=>setLoc(p=>p.map((c,j)=>j===i?{...c,[k]:v}:c));
   return (
-    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-box">
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
           <h2 style={{fontFamily:"Playfair Display",fontSize:24,fontWeight:700}}>Mis criterios</h2>
@@ -348,7 +353,7 @@ function DetailModal({prop, scored, onClose, onEdit, onDelete, onToggleLaure}) {
   const photos=prop.photos||[];
 
   return (
-    <div className="modal-bg" onClick={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
       <div className="modal-box" style={{maxWidth:600}}>
         {photos.length>0 && (
           <img src={photos[0]} alt="" onClick={()=>setLightbox(photos[0])}
