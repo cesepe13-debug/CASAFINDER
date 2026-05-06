@@ -101,7 +101,7 @@ async function extractFromText(text, url) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-api-key": "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",
+        "x-api-key": "REEMPLAZA_CON_TU_CLAVE",
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
@@ -178,7 +178,7 @@ function Lightbox({src, onClose}) {
 }
 
 function PropertyModal({prop, onSave, onClose}) {
-  const blank={title:"",url:"",address:"",zone:"",price:"",size:"",rooms:"",bathrooms:"",trastero:false,garaje:false,terraza:false,distanciaKm:"",comunidad:"",notes:"",enviadaLaure:false,photos:[]};
+  const blank={title:"",url:"",address:"",zone:"",price:"",size:"",rooms:"",bathrooms:"",trastero:false,garaje:false,terraza:false,piscina:false,aireCond:false,certEnergetico:"",tipoInmueble:"",planta:"",orientacion:"",distanciaKm:"",comunidad:"",notes:"",enviadaLaure:false,photos:[]};
   const [form,setForm]=useState(prop?{...prop,photos:prop.photos||[]}:blank);
   const [urlInput,setUrlInput]=useState(prop?.url||"");
   const [pastedText,setPastedText]=useState("");
@@ -240,6 +240,18 @@ function PropertyModal({prop, onSave, onClose}) {
             {form.error && <div style={{background:"#fef2f2",border:"1px solid #fccfcf",borderRadius:8,padding:"10px 13px",fontSize:12,color:"var(--accent)"}}>⚠ {form.error} — revisa los datos.</div>}
             {field("Título","title","Ático en San Pedro…")}
             {row2(<>
+              <div><label>Tipo de inmueble</label>
+                <select value={form.tipoInmueble||""} onChange={e=>s("tipoInmueble",e.target.value)}>
+                  <option value="">— Selecciona —</option>
+                  {["Piso","Adosado","Dúplex","Ático","Ático-dúplex"].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div><label>Planta</label>
+                <select value={form.planta||""} onChange={e=>s("planta",e.target.value)}>
+                  <option value="">— Selecciona —</option>
+                  {["Bajo","1ª","2ª","3ª","4ª","5ª","Ático"].map(t=><option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
               {field("Precio (€)","price","320000","number")}
               {field("Tamaño (m²)","size","90","number")}
               {field("Habitaciones","rooms","3","number")}
@@ -247,13 +259,28 @@ function PropertyModal({prop, onSave, onClose}) {
               {field("Dist. trabajo (km)","distanciaKm","8","number")}
               {field("Comunidad (€/mes)","comunidad","120","number")}
             </>)}
+            <div><label>Orientación</label>
+              <select value={form.orientacion||""} onChange={e=>s("orientacion",e.target.value)}>
+                <option value="">— Selecciona —</option>
+                {["Norte","Noreste","Este","Sureste","Sur","Suroeste","Oeste","Noroeste","Norte-Sur","Este-Oeste"].map(t=><option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
             {field("Dirección","address","C/ ...")}
             {field("Zona / municipio","zone","Marbella, San Pedro…")}
             {field("URL del anuncio","url","https://idealista.com/...")}
             <div><label>Características</label>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"]].map(([k,lbl])=>(
+                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"],["piscina","🏊 Piscina"],["aireCond","❄️ Aire acond."]].map(([k,lbl])=>(
                   <div key={k} className={`toggle-bool${form[k]?" on":""}`} onClick={()=>s(k,!form[k])}>{form[k]?"✓":"○"} {lbl}</div>
+                ))}
+              </div>
+            </div>
+            <div><label>Certificado energético</label>
+              <div style={{display:"flex",gap:8}}>
+                {["","Sí","En trámite"].map(v=>(
+                  <div key={v} className={`toggle-bool${form.certEnergetico===v&&v?" on":""}`} onClick={()=>s("certEnergetico",v)} style={{fontSize:13}}>
+                    {v||"No especificado"}
+                  </div>
                 ))}
               </div>
             </div>
@@ -341,6 +368,7 @@ function DetailModal({prop, scored, onClose, onEdit, onDelete, onToggleLaure}) {
           </div>
           <div style={{marginTop:14,display:"flex",gap:20,flexWrap:"wrap"}}>
             <div>
+              {(prop.tipoInmueble||prop.planta)&&<div style={{fontSize:12,color:"var(--inkDim)",marginBottom:4}}>{[prop.tipoInmueble,prop.planta].filter(Boolean).join(" · ")}</div>}
               <div style={{fontFamily:"Playfair Display",fontSize:26,fontWeight:700,color:"var(--accent)"}}>{prop.price?.toLocaleString("es-ES")} €</div>
               {prop.size&&prop.price&&<div style={{fontSize:12,color:"var(--inkDim)"}}>{Math.round(prop.price/prop.size).toLocaleString("es-ES")} €/m²</div>}
             </div>
@@ -354,9 +382,13 @@ function DetailModal({prop, scored, onClose, onEdit, onDelete, onToggleLaure}) {
         </div>
 
         <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
-          {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"]].map(([k,lbl])=>(
+          {prop.tipoInmueble&&<span className="tag" style={{background:"var(--blueSoft)",borderColor:"#93b4e8",color:"var(--blue)"}}>{prop.tipoInmueble}</span>}
+          {prop.planta&&<span className="tag">🏢 {prop.planta}</span>}
+          {prop.orientacion&&<span className="tag">🧭 {prop.orientacion}</span>}
+          {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"]].map(([k,lbl])=>(
             <span key={k} className={`tag ${prop[k]?"yes":"no"}`}>{lbl}</span>
           ))}
+          {prop.certEnergetico&&<span className="tag" style={{background:"var(--greenSoft)",borderColor:"#a8d5be",color:"var(--green)"}}>⚡ Cert. {prop.certEnergetico}</span>}
           {prop.comunidad&&<span className="tag">🏢 {prop.comunidad} €/mes</span>}
           <button className={`laure-btn ${prop.enviadaLaure?"sent":"unsent"}`} onClick={()=>onToggleLaure(prop.id)}>
             {prop.enviadaLaure?"✉ Enviada a Laure":"✉ Enviar a Laure"}
@@ -526,7 +558,9 @@ export default function App() {
               </div>
 
               <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
-                {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"]].map(([k,e])=>p[k]?<span key={k} className="tag yes">{e}</span>:null)}
+                {p.tipoInmueble&&<span className="tag" style={{background:"var(--blueSoft)",borderColor:"#93b4e8",color:"var(--blue)",fontSize:11}}>{p.tipoInmueble}</span>}
+                {p.planta&&<span className="tag" style={{fontSize:11}}>{p.planta}</span>}
+                {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"]].map(([k,e])=>p[k]?<span key={k} className="tag yes">{e}</span>:null)}
               </div>
 
               <div style={{marginBottom:10}} onClick={e=>{e.stopPropagation();toggleLaure(p.id);}}>
