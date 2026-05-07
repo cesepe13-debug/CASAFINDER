@@ -262,9 +262,7 @@ function Toggle({ val, onChange, label }) {
 function BreakdownBar({ bd }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-      <p style={{ fontSize: 11, color: "var(--inkDim)", lineHeight: 1.5 }}>
-        Cada barra indica qué tan bien cumple la propiedad ese criterio (0–100%). El número de importancia (×1 a ×5) pondera su peso en la puntuación final.
-      </p>
+
       {bd.filter(b => b.weight > 0).map(b => (
         <div key={b.id}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
@@ -596,7 +594,7 @@ function CriteriaModal({ criteria, onChange, onClose }) {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: c.type !== "boolean" && c.weight > 0 ? 8 : 0 }}>
                   <span style={{ fontWeight: 500, fontSize: 13 }}>{c.label}</span>
                   <div style={{ display: "flex", gap: 3 }}>
-                    {[0, 1, 2, 3, 4, 5].map(w => (
+                    {[0,1,2,3,4,5,6,7,8,9,10].map(w => (
                       <button key={w} className={`w-btn${c.weight === w ? " active" : ""}`} onClick={() => set(i, "weight", w)}>{w}</button>
                     ))}
                   </div>
