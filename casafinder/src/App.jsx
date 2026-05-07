@@ -1,98 +1,36 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "./firebase";
-import {
-  collection, doc, onSnapshot, setDoc, deleteDoc
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, setDoc, deleteDoc } from "firebase/firestore";
 
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400&family=Outfit:wght@300;400;500;600&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg: #f7f4ef; --bg2: #efeae1; --surface: #ffffff; --surfaceDim: #f2ede5;
-    --border: #e0d9ce; --borderDark: #c8bfb0;
-    --accent: #c0392b; --accentDark: #962d22; --accentSoft: #fdf0ee;
-    --ink: #1a1410; --inkMid: #5a5048; --inkDim: #9a8f82; --inkFaint: #c8bfb0;
-    --gold: #b8860b; --goldSoft: #fdf8ee;
-    --green: #2d6a4f; --greenSoft: #eaf4ef;
-    --blue: #2c5faa; --blueSoft: #eaf0fb;
-    --shadow: 0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
-    --shadowHover: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
-    --radius: 14px;
-  }
-  body { background:var(--bg); color:var(--ink); font-family:'Outfit',sans-serif; min-height:100vh; }
-  body::before { content:''; position:fixed; inset:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E"); opacity:0.025; pointer-events:none; z-index:9999; }
-  ::-webkit-scrollbar{width:5px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-  input,textarea,select{font-family:'Outfit',sans-serif;background:var(--surfaceDim);border:1.5px solid var(--border);border-radius:8px;color:var(--ink);padding:9px 13px;font-size:14px;outline:none;transition:border-color 0.2s;width:100%}
-  input:focus,textarea:focus,select:focus{border-color:var(--accent)}
-  button{cursor:pointer;font-family:'Outfit',sans-serif}
-  .card-enter{animation:cardIn 0.4s cubic-bezier(0.22,1,0.36,1) both}
-  @keyframes cardIn{from{opacity:0;transform:translateY(18px) scale(0.97)}to{opacity:1;transform:none}}
-  .pulse{animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
-  .modal-bg{position:fixed;inset:0;background:rgba(26,20,16,0.55);backdrop-filter:blur(6px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;animation:fadeIn 0.2s ease both}
-  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-  .modal-box{background:var(--surface);border-radius:18px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;padding:32px;box-shadow:0 24px 64px rgba(0,0,0,0.18);animation:slideUp 0.3s cubic-bezier(0.22,1,0.36,1) both}
-  @keyframes slideUp{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
-  .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:11px 22px;font-size:14px;font-weight:600;letter-spacing:0.02em;transition:background 0.2s,transform 0.1s}
-  .btn-primary:hover{background:var(--accentDark)}
-  .btn-primary:active{transform:scale(0.97)}
-  .btn-secondary{background:var(--surfaceDim);color:var(--inkMid);border:1.5px solid var(--border);border-radius:9px;padding:10px 18px;font-size:14px;transition:border-color 0.2s,background 0.2s}
-  .btn-secondary:hover{border-color:var(--borderDark);background:var(--bg2)}
-  .tag{display:inline-flex;align-items:center;gap:4px;background:var(--surfaceDim);border:1px solid var(--border);border-radius:20px;padding:3px 10px;font-size:12px;color:var(--inkMid);font-weight:500}
-  .tag.yes{background:var(--greenSoft);border-color:#a8d5be;color:var(--green)}
-  .tag.no{background:#fef2f2;border-color:#fccfcf;color:#c0392b99;text-decoration:line-through;opacity:0.7}
-  label{font-size:12px;color:var(--inkDim);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:5px}
-  .score-chip{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;font-weight:700;border:2.5px solid currentColor;flex-shrink:0}
-  .header-stripe{background:var(--ink);padding:0 28px;height:58px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
-  .stat-pill{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 16px;min-width:110px}
-  .prop-card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);padding:20px;cursor:pointer;transition:box-shadow 0.22s,transform 0.22s,border-color 0.22s;box-shadow:var(--shadow);position:relative;overflow:hidden}
-  .prop-card:hover{box-shadow:var(--shadowHover);transform:translateY(-3px);border-color:var(--borderDark)}
-  .prop-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent),var(--gold));opacity:0;transition:opacity 0.22s}
-  .prop-card:hover::before{opacity:1}
-  .laure-btn{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;border:1.5px solid;cursor:pointer;transition:all 0.18s;background:none}
-  .laure-btn.sent{background:var(--blueSoft);border-color:#93b4e8;color:var(--blue)}
-  .laure-btn.unsent{background:var(--surfaceDim);border-color:var(--border);color:var(--inkDim)}
-  .toggle-bool{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;font-size:13px;font-weight:500;transition:all 0.18s;user-select:none;background:var(--surfaceDim);color:var(--inkMid)}
-  .toggle-bool.on{background:var(--greenSoft);border-color:#a8d5be;color:var(--green)}
-  .weight-btn{width:30px;height:30px;border-radius:6px;border:1.5px solid var(--border);background:var(--surfaceDim);color:var(--inkMid);font-size:13px;font-weight:600;transition:all 0.15s}
-  .weight-btn.active{background:var(--accent);border-color:var(--accent);color:white}
-  .live-dot{width:7px;height:7px;border-radius:50%;background:#4caf7d;display:inline-block;animation:livePulse 2s ease-in-out infinite}
-  @keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
-  .photo-thumb{width:72px;height:72px;object-fit:cover;border-radius:8px;border:1.5px solid var(--border);cursor:zoom-in;transition:transform 0.15s}
-  .photo-thumb:hover{transform:scale(1.05)}
-  .drop-zone{border:2px dashed var(--border);border-radius:10px;padding:20px;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;color:var(--inkDim);font-size:13px}
-  .drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accentSoft);color:var(--accent)}
-  .tab-btn{padding:8px 14px;border-radius:8px;border:1.5px solid var(--border);background:var(--surfaceDim);color:var(--inkMid);font-size:13px;font-weight:500;transition:all 0.18s}
-  .tab-btn.active{background:var(--ink);border-color:var(--ink);color:white}
-  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
-  .lightbox img{max-width:95vw;max-height:95vh;border-radius:8px;object-fit:contain}
-`;
+const fmt = (n) => n && Number(n) > 0 ? Number(n).toLocaleString("es-ES") : "";
 
-const DEFAULT_CRITERIA = [
-  { id:"price",       label:"Precio",           weight:5, type:"lower_better",  target:350000, unit:"€" },
-  { id:"size",        label:"Metros cuadrados",  weight:4, type:"higher_better", target:90,     unit:"m²" },
-  { id:"trastero",    label:"Trastero",          weight:3, type:"boolean" },
-  { id:"garaje",      label:"Garaje",            weight:4, type:"boolean" },
-  { id:"terraza",     label:"Terraza / jardín",  weight:3, type:"boolean" },
-  { id:"distanciaKm", label:"Distancia trabajo", weight:5, type:"lower_better",  target:10,     unit:"km" },
-];
+function scoreColor(pts) {
+  return pts >= 75 ? "#1a5c3a" : pts >= 48 ? "#8a5c00" : "#991b1b";
+}
 
-function scoreColor(pts) { return pts>=75?"var(--green)":pts>=48?"var(--gold)":"var(--accent)"; }
-function score(prop, criteria) {
-  let total=0, max=0; const bd=[];
+function calcScore(prop, criteria) {
+  let total = 0, max = 0;
+  const bd = [];
   criteria.forEach(c => {
-    if(!c.weight) return;
-    const v=prop[c.id]; let s=0;
-    if(c.type==="boolean") s=v?1:0;
-    else if(c.type==="lower_better") s=v==null?0.5:v<=c.target?1:Math.max(0,1-(v-c.target)/c.target);
-    else s=v==null?0.5:v>=c.target?1:Math.max(0,v/c.target);
-    total+=s*c.weight; max+=c.weight; bd.push({...c,s,v});
+    if (!c.weight) return;
+    const v = prop[c.id];
+    let s = 0;
+    if (c.type === "boolean") s = v ? 1 : 0;
+    else if (c.type === "lower_better") s = v == null || v === 0 ? 0.5 : v <= c.target ? 1 : Math.max(0, 1 - (v - c.target) / c.target);
+    else s = v == null || v === 0 ? 0.5 : v >= c.target ? 1 : Math.max(0, v / c.target);
+    total += s * c.weight; max += c.weight;
+    bd.push({ ...c, s, v });
   });
-  return { pts: max?Math.round((total/max)*100):0, bd };
+  return { pts: max ? Math.round((total / max) * 100) : 0, bd };
 }
 
 function fileToBase64(file) {
-  return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
 }
 
 async function extractFromText(text, url) {
@@ -109,61 +47,215 @@ async function extractFromText(text, url) {
         max_tokens: 1000,
         messages: [{
           role: "user",
-          content: "Eres un asistente que extrae datos de anuncios inmobiliarios españoles.\n\nTexto del anuncio:\n" + (text || "") + "\n\nURL: " + (url || "no proporcionada") + "\n\nDevuelve SOLO JSON válido sin markdown ni texto adicional:\n{\"title\":\"\",\"address\":\"\",\"zone\":\"\",\"price\":null,\"size\":null,\"rooms\":null,\"bathrooms\":null,\"trastero\":false,\"garaje\":false,\"terraza\":false,\"distanciaKm\":null,\"comunidad\":null,\"notes\":\"\",\"error\":null}\n\nReglas: price/size solo números sin símbolos, trastero/garaje/terraza true solo si se mencionan explícitamente, notes resumen breve, null si no aparece.",
+          content: "Extrae datos del anuncio. SOLO JSON sin markdown:\n{\"title\":\"\",\"address\":\"\",\"zone\":\"\",\"price\":0,\"sizeUtil\":0,\"sizeConstruida\":0,\"rooms\":0,\"bathrooms\":0,\"trastero\":false,\"garaje\":false,\"terraza\":false,\"piscina\":false,\"aireCond\":false,\"distanciaKm\":0,\"comunidad\":0,\"ibi\":0,\"inmobiliaria\":\"\",\"notes\":\"\"}\nTexto: " + (text || "") + "\nURL: " + (url || ""),
         }],
       }),
     });
-    const data = await res.json();
-    const textResponse = data.content?.map(b => b.text || "").join("") || "";
-    try {
-      return JSON.parse(textResponse.replace(/```json|```/g, "").trim());
-    } catch {
-      return { error: "No se pudo parsear", title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
-    }
-  } catch(err) {
-    return { error: "Error: " + err.message, title: "", address: "", zone: "", price: null, size: null, rooms: null, bathrooms: null, trastero: false, garaje: false, terraza: false, distanciaKm: null, comunidad: null, notes: "" };
+    const d = await res.json();
+    const t = d.content?.map(b => b.text || "").join("") || "";
+    return JSON.parse(t.replace(/```json|```/g, "").trim());
+  } catch (e) {
+    return { error: e.message };
   }
 }
 
-function ScoreChip({pts, size=52}) {
-  return <div className="score-chip" style={{color:scoreColor(pts),width:size,height:size,fontSize:size*0.3}}>{pts}</div>;
+const DEFAULT_CRITERIA = [
+  { id: "price", label: "Precio", weight: 5, type: "lower_better", target: 350000, unit: "€" },
+  { id: "sizeUtil", label: "Metros útiles", weight: 4, type: "higher_better", target: 90, unit: "m²" },
+  { id: "trastero", label: "Trastero", weight: 3, type: "boolean" },
+  { id: "garaje", label: "Garaje", weight: 4, type: "boolean" },
+  { id: "terraza", label: "Terraza", weight: 3, type: "boolean" },
+  { id: "distanciaKm", label: "Distancia trabajo", weight: 5, type: "lower_better", target: 10, unit: "km" },
+];
+
+const ZONES = ["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"];
+
+const css = `
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f4f4f2;
+    --surface: #ffffff;
+    --dim: #f0f0ee;
+    --border: #e0e0dc;
+    --borderMid: #c4c4c0;
+    --ink: #111110;
+    --inkMid: #444440;
+    --inkDim: #888884;
+    --inkFaint: #bbbbba;
+    --green: #1a5c3a;
+    --greenBg: #edf7f2;
+    --amber: #8a5c00;
+    --amberBg: #fdf6e3;
+    --red: #991b1b;
+    --redBg: #fef2f2;
+    --blue: #1d3f7a;
+    --blueBg: #eff4ff;
+    --sh: 0 1px 3px rgba(0,0,0,0.08);
+    --shMd: 0 4px 16px rgba(0,0,0,0.1);
+  }
+  body { background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; min-height: 100vh; font-size: 14px; }
+  ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--borderMid); border-radius: 2px; }
+  input, textarea, select { font-family: 'Inter', sans-serif; background: var(--dim); border: 1px solid var(--border); border-radius: 6px; color: var(--ink); padding: 8px 11px; font-size: 13px; outline: none; transition: border-color 0.15s, box-shadow 0.15s; width: 100%; }
+  input:focus, textarea:focus, select:focus { border-color: var(--ink); box-shadow: 0 0 0 2px rgba(0,0,0,0.06); }
+  button { cursor: pointer; font-family: 'Inter', sans-serif; }
+  h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; }
+  .label { font-size: 11px; color: var(--inkDim); font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+
+  .pulse { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .card-enter { animation: cardIn 0.3s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes cardIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+
+  .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(4px); z-index:100; display:flex; align-items:center; justify-content:center; padding:16px; animation:fadeIn 0.15s ease both; }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  .modal-box { background:var(--surface); border-radius:12px; width:100%; max-width:580px; max-height:92vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); animation:slideUp 0.22s cubic-bezier(0.22,1,0.36,1) both; }
+  @keyframes slideUp { from { transform:translateY(16px); opacity:0; } to { transform:none; opacity:1; } }
+
+  .btn { border:none; border-radius:7px; padding:9px 16px; font-size:13px; font-weight:500; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px; }
+  .btn-dark { background:var(--ink); color:#fff; } .btn-dark:hover { background:#2a2a28; }
+  .btn-ghost { background:transparent; color:var(--inkMid); border:1px solid var(--border); } .btn-ghost:hover { background:var(--dim); }
+  .btn-danger { background:var(--redBg); color:var(--red); border:1px solid #fccfcf; }
+  .btn-sm { padding:6px 11px; font-size:12px; }
+
+  .toggle { display:inline-flex; align-items:center; gap:6px; padding:6px 11px; border-radius:6px; border:1px solid var(--border); cursor:pointer; font-size:12px; font-weight:500; transition:all 0.15s; user-select:none; background:var(--surface); color:var(--inkMid); }
+  .toggle.on { background:var(--greenBg); border-color:#a8d5be; color:var(--green); }
+  .toggle-dot { width:13px; height:13px; border-radius:50%; border:1.5px solid currentColor; display:flex; align-items:center; justify-content:center; font-size:8px; flex-shrink:0; }
+
+  .tag { display:inline-flex; align-items:center; gap:3px; background:var(--dim); border:1px solid var(--border); border-radius:4px; padding:2px 7px; font-size:11px; color:var(--inkMid); font-weight:500; white-space:nowrap; }
+  .tag-green { background:var(--greenBg); border-color:#a8d5be; color:var(--green); }
+  .tag-blue { background:var(--blueBg); border-color:#93b4e8; color:var(--blue); }
+  .tag-amber { background:var(--amberBg); border-color:#e8d598; color:var(--amber); }
+
+  .prop-card { background:var(--surface); border-radius:10px; border:1px solid var(--border); cursor:pointer; transition:box-shadow 0.2s, border-color 0.2s; box-shadow:var(--sh); position:relative; overflow:hidden; }
+  .prop-card:hover { box-shadow:var(--shMd); border-color:var(--borderMid); }
+  .rank-num { position:absolute; top:10px; left:10px; width:22px; height:22px; border-radius:50%; background:var(--ink); color:white; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; z-index:1; font-family:'Space Grotesk',sans-serif; }
+
+  .score-ring { position:relative; flex-shrink:0; }
+  .score-ring svg { display:block; }
+  .score-ring .sval { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+  .header { background:var(--ink); height:50px; display:flex; align-items:center; gap:12px; padding:0 22px; position:sticky; top:0; z-index:20; }
+  .stat-bar { background:var(--surface); border-bottom:1px solid var(--border); padding:10px 22px; display:flex; gap:0; }
+  .stat-item { padding:0 18px; border-right:1px solid var(--border); }
+  .stat-item:first-child { padding-left:0; }
+  .stat-item:last-child { border-right:none; }
+
+  .sec { font-size:10px; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--inkFaint); margin-bottom:8px; margin-top:16px; }
+  .sec:first-child { margin-top:0; }
+
+  .dgrid { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .dcell { padding:9px 13px; border-bottom:1px solid var(--border); border-right:1px solid var(--border); }
+  .dcell:nth-child(even) { border-right:none; }
+  .dcell:nth-last-child(-n+2) { border-bottom:none; }
+  .dcell-l { font-size:10px; color:var(--inkFaint); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px; }
+  .dcell-v { font-size:13px; font-weight:500; }
+
+  .drop-zone { border:1.5px dashed var(--border); border-radius:8px; padding:16px; text-align:center; cursor:pointer; font-size:12px; color:var(--inkDim); transition:all 0.15s; }
+  .drop-zone:hover, .drop-zone.over { border-color:var(--ink); color:var(--ink); background:var(--dim); }
+  .photo-thumb { width:62px; height:62px; object-fit:cover; border-radius:6px; border:1px solid var(--border); cursor:zoom-in; }
+
+  .tab-btn { padding:6px 13px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--inkMid); font-size:12px; font-weight:500; transition:all 0.15s; }
+  .tab-btn.active { background:var(--ink); border-color:var(--ink); color:white; }
+
+  .lightbox { position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:200; display:flex; align-items:center; justify-content:center; cursor:zoom-out; }
+  .lightbox img { max-width:95vw; max-height:95vh; object-fit:contain; border-radius:6px; }
+
+  .w-btn { width:27px; height:27px; border-radius:5px; border:1px solid var(--border); background:transparent; color:var(--inkMid); font-size:12px; font-weight:600; transition:all 0.12s; }
+  .w-btn.active { background:var(--ink); border-color:var(--ink); color:white; }
+
+  .live-dot { width:6px; height:6px; border-radius:50%; background:#22c55e; display:inline-block; animation:lp 2s ease-in-out infinite; }
+  @keyframes lp { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+
+  .print-ico { opacity:0; transition:opacity 0.2s; }
+  .prop-card:hover .print-ico { opacity:1; }
+
+  @media print {
+    .no-print { display:none!important; }
+  }
+`;
+
+// ── ScoreRing ─────────────────────────────────────────────────────────────────
+function ScoreRing({ pts, size = 52, rank }) {
+  const r = size / 2 - 5;
+  const c = 2 * Math.PI * r;
+  const fill = (pts / 100) * c;
+  const col = scoreColor(pts);
+  return (
+    <div className="score-ring" style={{ width: size, height: size }}>
+      <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e0e0dc" strokeWidth={3} />
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={3}
+          strokeDasharray={`${fill} ${c}`} strokeLinecap="round"
+          style={{ transition: "stroke-dasharray 0.5s ease" }} />
+      </svg>
+      <div className="sval">
+        <span style={{ fontSize: size * 0.26, fontWeight: 700, color: col, fontFamily: "Space Grotesk,sans-serif", lineHeight: 1 }}>{pts}</span>
+        {rank && <span style={{ fontSize: 9, color: "#aaa", marginTop: 1 }}>#{rank}</span>}
+      </div>
+    </div>
+  );
 }
 
-function BreakdownBar({bd}) {
+// ── Toggle ─────────────────────────────────────────────────────────────────────
+function Toggle({ val, onChange, label }) {
   return (
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>
-      {bd.filter(b=>b.weight>0).map(b=>(
-        <div key={b.id} style={{display:"flex",alignItems:"center",gap:10}}>
-          <span style={{fontSize:12,color:"var(--inkDim)",width:148,flexShrink:0}}>{b.label}</span>
-          <div style={{flex:1,height:5,background:"var(--bg2)",borderRadius:99,overflow:"hidden"}}>
-            <div style={{height:"100%",width:`${b.s*100}%`,background:scoreColor(Math.round(b.s*100)),borderRadius:99,transition:"width 0.6s cubic-bezier(0.22,1,0.36,1)"}}/>
+    <div className={`toggle${val ? " on" : ""}`} onClick={() => onChange(!val)}>
+      <div className="toggle-dot">{val ? "✓" : ""}</div>
+      {label}
+    </div>
+  );
+}
+
+// ── BreakdownBar ──────────────────────────────────────────────────────────────
+function BreakdownBar({ bd }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <p style={{ fontSize: 11, color: "var(--inkDim)", lineHeight: 1.5 }}>
+        Cada barra indica qué tan bien cumple la propiedad ese criterio (0–100%). El número de importancia (×1 a ×5) pondera su peso en la puntuación final.
+      </p>
+      {bd.filter(b => b.weight > 0).map(b => (
+        <div key={b.id}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontSize: 12, color: "var(--inkMid)" }}>{b.label}</span>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: scoreColor(Math.round(b.s * 100)) }}>{Math.round(b.s * 100)}%</span>
+              <span style={{ fontSize: 10, color: "var(--inkFaint)" }}>importancia ×{b.weight}</span>
+            </div>
           </div>
-          <span style={{fontSize:11,color:"var(--inkDim)",width:34,textAlign:"right"}}>{Math.round(b.s*100)}%</span>
-          <span style={{fontSize:10,color:"var(--inkFaint)",width:16}}>×{b.weight}</span>
+          <div style={{ height: 4, background: "var(--dim)", borderRadius: 2, overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${b.s * 100}%`, background: scoreColor(Math.round(b.s * 100)), borderRadius: 2, transition: "width 0.5s ease" }} />
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-function PhotoUploader({photos=[], onChange}) {
-  const inputRef=useRef(); const [over,setOver]=useState(false);
-  const addFiles=async(files)=>{ const n=await Promise.all(Array.from(files).map(fileToBase64)); onChange([...photos,...n]); };
-  const remove=(i)=>onChange(photos.filter((_,idx)=>idx!==i));
+// ── PhotoUploader ─────────────────────────────────────────────────────────────
+function PhotoUploader({ photos = [], onChange }) {
+  const inputRef = useRef();
+  const [over, setOver] = useState(false);
+  const addFiles = async (files) => {
+    const n = await Promise.all(Array.from(files).map(fileToBase64));
+    onChange([...photos, ...n]);
+  };
+  const remove = (i) => onChange(photos.filter((_, idx) => idx !== i));
   return (
     <div>
-      <div className={`drop-zone${over?" over":""}`} onClick={()=>inputRef.current.click()}
-        onDragOver={e=>{e.preventDefault();setOver(true)}} onDragLeave={()=>setOver(false)}
-        onDrop={e=>{e.preventDefault();setOver(false);addFiles(e.dataTransfer.files)}}>
-        📷 Pulsa o arrastra capturas de pantalla aquí
-        <input ref={inputRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={e=>addFiles(e.target.files)}/>
+      <div className={`drop-zone${over ? " over" : ""}`} onClick={() => inputRef.current.click()}
+        onDragOver={e => { e.preventDefault(); setOver(true); }}
+        onDragLeave={() => setOver(false)}
+        onDrop={e => { e.preventDefault(); setOver(false); addFiles(e.dataTransfer.files); }}>
+        📷 Pulsa o arrastra fotos aquí
+        <input ref={inputRef} type="file" accept="image/*" multiple style={{ display: "none" }} onChange={e => addFiles(e.target.files)} />
       </div>
-      {photos.length>0 && (
-        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:8}}>
-          {photos.map((src,i)=>(
-            <div key={i} style={{position:"relative"}}>
-              <img src={src} className="photo-thumb" alt=""/>
-              <button onClick={()=>remove(i)} style={{position:"absolute",top:-6,right:-6,width:20,height:20,borderRadius:"50%",background:"var(--accent)",color:"white",border:"none",fontSize:12,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+      {photos.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+          {photos.map((src, i) => (
+            <div key={i} style={{ position: "relative" }}>
+              <img src={src} className="photo-thumb" alt="" />
+              <button onClick={() => remove(i)} style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", background: "#111", color: "white", border: "none", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center" }}>×</button>
             </div>
           ))}
         </div>
@@ -172,429 +264,597 @@ function PhotoUploader({photos=[], onChange}) {
   );
 }
 
-function Lightbox({src, onClose}) {
-  useEffect(()=>{ const h=e=>e.key==="Escape"&&onClose(); window.addEventListener("keydown",h); return()=>window.removeEventListener("keydown",h); },[]);
-  return <div className="lightbox" onClick={onClose}><img src={src} alt=""/></div>;
+function Lightbox({ src, onClose }) {
+  useEffect(() => {
+    const h = e => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+  return <div className="lightbox" onClick={onClose}><img src={src} alt="" /></div>;
 }
 
-function PropertyModal({prop, onSave, onClose}) {
-  const blank={title:"",url:"",address:"",zone:"",price:"",size:"",rooms:"",bathrooms:"",trastero:false,garaje:false,terraza:false,piscina:false,aireCond:false,certEnergetico:"",tipoInmueble:"",planta:"",orientacion:"",distanciaKm:"",comunidad:"",notes:"",enviadaLaure:false,photos:[]};
-  const [form,setForm]=useState(prop?{...prop,photos:prop.photos||[]}:blank);
-  const [urlInput,setUrlInput]=useState(prop?.url||"");
-  const [pastedText,setPastedText]=useState("");
-  const [loading,setLoading]=useState(false);
-  const [tab,setTab]=useState(prop?"form":"paste");
+// ── Print ─────────────────────────────────────────────────────────────────────
+function printPDF(prop, pts, rank) {
+  const w = window.open("", "_blank");
+  const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
+  const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
+  const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"]].filter(([k]) => prop[k]).map(([,l]) => l);
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title || "Propiedad"}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:32px;color:#111;font-size:13px;line-height:1.5}
+    h1{font-size:20px;margin-bottom:4px;font-weight:700}
+    .sub{color:#666;font-size:12px;margin-bottom:20px}
+    .score-box{float:right;text-align:center;border:2px solid #111;border-radius:8px;padding:8px 14px;margin:-60px 0 0 0}
+    .score-n{font-size:32px;font-weight:700;line-height:1}
+    .score-l{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em}
+    .rank-l{font-size:12px;color:#888;margin-top:2px}
+    .price{font-size:28px;font-weight:700;margin:0 0 4px}
+    .ratio{font-size:13px;color:#555;margin-bottom:20px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #ddd;border-radius:6px;overflow:hidden;margin-bottom:16px}
+    .cell{padding:8px 12px;border-bottom:1px solid #eee;border-right:1px solid #eee;font-size:12px}
+    .cell:nth-child(even){border-right:none}
+    .cl{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:0.05em}
+    .cv{font-weight:500;margin-top:2px}
+    .tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}
+    .tag{border:1px solid #ddd;border-radius:3px;padding:2px 7px;font-size:11px}
+    .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:6px;padding:10px 14px;font-size:12px;color:#555}
+    .vistas{margin-bottom:14px;font-size:12px;color:#555}
+  </style></head><body>
+  <div class="score-box">
+    <div class="score-n">${pts}</div>
+    <div class="score-l">Idoneidad</div>
+    <div class="rank-l">Ranking #${rank}</div>
+  </div>
+  <h1>${prop.title || "Sin título"}</h1>
+  <div class="sub">${[prop.address, prop.zone].filter(Boolean).join(" · ")}</div>
+  <div class="price">${prop.price ? Number(prop.price).toLocaleString("es-ES") + " €" : "—"}</div>
+  <div class="ratio">${ratio}${prop.sizeUtil ? " · " + prop.sizeUtil + " m² útiles" : ""}${prop.sizeConstruida ? " · " + prop.sizeConstruida + " m² construidos" : ""}</div>
+  <div class="grid">
+    ${[
+      ["Tipo", prop.tipoInmueble], ["Planta", prop.planta],
+      ["Habitaciones", prop.rooms || "—"], ["Baños", prop.bathrooms || "—"],
+      ["Orientación", prop.orientacion], ["Dist. trabajo", prop.distanciaKm ? prop.distanciaKm + " km" : null],
+      ["Comunidad", prop.comunidad ? Number(prop.comunidad).toLocaleString("es-ES") + " €/mes" : null],
+      ["IBI", prop.ibi ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null],
+      ["Cert. energético", prop.certEnergetico], ["Inmobiliaria", prop.inmobiliaria],
+    ].filter(([, v]) => v).map(([l, v]) => `<div class="cell"><div class="cl">${l}</div><div class="cv">${v}</div></div>`).join("")}
+  </div>
+  ${tags.length ? `<div class="tags">${tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>` : ""}
+  ${prop.vistas && prop.vistas.length ? `<div class="vistas">Vistas: ${prop.vistas.join(", ")}</div>` : ""}
+  ${prop.notes ? `<div class="notes">${prop.notes}</div>` : ""}
+  </body></html>`);
+  w.document.close();
+  setTimeout(() => w.print(), 400);
+}
 
-  const s=(k,v)=>setForm(f=>({...f,[k]:v}));
-  const n=(k,v)=>setForm(f=>({...f,[k]:v===""?"":Number(v)}));
+// ── PropertyModal ─────────────────────────────────────────────────────────────
+function PropertyModal({ prop, onSave, onClose }) {
+  const blank = {
+    title: "", url: "", address: "", zone: "", price: 0, sizeUtil: 0, sizeConstruida: 0,
+    rooms: 0, bathrooms: 0, trastero: false, terraza: false, numTerrazas: 0, garaje: false,
+    piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false,
+    certEnergetico: "", vistas: [], tipoInmueble: "", planta: "", orientacion: "",
+    distanciaKm: 0, comunidad: 0, ibi: 0, inmobiliaria: "", notes: "",
+    enviadaLaure: false, photos: [],
+  };
+  const [form, setForm] = useState(prop ? { ...blank, ...prop, photos: prop.photos || [] } : blank);
+  const [urlInput, setUrlInput] = useState(prop?.url || "");
+  const [pastedText, setPastedText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [tab, setTab] = useState(prop ? "form" : "paste");
 
-  const doExtract=async()=>{
-    if(!pastedText.trim()&&!urlInput.trim()) return;
+  const s = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const n = (k, v) => setForm(f => ({ ...f, [k]: v === "" ? 0 : Number(v) }));
+
+  const doExtract = async () => {
     setLoading(true);
-    const d=await extractFromText(pastedText,urlInput);
-    setForm(f=>({...f,...d,url:urlInput||f.url,photos:f.photos}));
-    setLoading(false); setTab("form");
+    const d = await extractFromText(pastedText, urlInput);
+    setForm(f => ({ ...f, ...d, url: urlInput || f.url, photos: f.photos }));
+    setLoading(false);
+    setTab("form");
   };
 
-  const row2=(children)=><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>{children}</div>;
-  const field=(lbl,key,ph,type="text")=>(
-    <div><label>{lbl}</label>
-      <input type={type} value={form[key]??""} onChange={e=>type==="number"?n(key,e.target.value):s(key,e.target.value)} placeholder={ph}/>
+  const numField = (lbl, key, unit = "") => (
+    <div>
+      <label className="label">{lbl}{unit && <span style={{ color: "var(--inkFaint)", fontWeight: 400 }}> ({unit})</span>}</label>
+      <input type="number" min="0" value={form[key] ?? 0}
+        onChange={e => n(key, e.target.value)}
+        onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }} />
     </div>
   );
+  const txtField = (lbl, key, ph = "") => (
+    <div>
+      <label className="label">{lbl}</label>
+      <input type="text" value={form[key] || ""} onChange={e => s(key, e.target.value)} placeholder={ph} />
+    </div>
+  );
+  const row2 = (ch) => <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>{ch}</div>;
+
+  const toggleVista = (v) => {
+    const vistas = form.vistas || [];
+    s("vistas", vistas.includes(v) ? vistas.filter(x => x !== v) : [...vistas, v]);
+  };
 
   return (
-    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
-          <h2 style={{fontFamily:"Playfair Display",fontSize:22,fontWeight:700}}>{prop?"Editar propiedad":"Nueva propiedad"}</h2>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"var(--inkDim)",fontSize:22}}>×</button>
+        <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ fontSize: 17 }}>{prop ? "Editar propiedad" : "Nueva propiedad"}</h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--inkDim)", fontSize: 20, lineHeight: 1 }}>×</button>
         </div>
-
-        {!prop && (
-          <div style={{display:"flex",gap:8,marginBottom:20}}>
-            <button className={`tab-btn${tab==="paste"?" active":""}`} onClick={()=>setTab("paste")}>📋 Pegar texto</button>
-            <button className={`tab-btn${tab==="form"?" active":""}`} onClick={()=>setTab("form")}>✏ Manual</button>
-          </div>
-        )}
-
-        {tab==="paste" && (
-          <div style={{display:"flex",flexDirection:"column",gap:12}}>
-            <div><label>URL del anuncio (opcional)</label>
-              <input value={urlInput} onChange={e=>setUrlInput(e.target.value)} placeholder="https://idealista.com/inmueble/..."/></div>
-            <div><label>Texto del anuncio</label>
-              <textarea value={pastedText} onChange={e=>setPastedText(e.target.value)}
-                placeholder="Abre el anuncio en Idealista o Fotocasa → pulsa Ctrl+A para seleccionar todo → Ctrl+C para copiar → pégalo aquí con Ctrl+V"
-                style={{minHeight:180,resize:"vertical",fontSize:13,lineHeight:1.5}}/></div>
-            <div style={{background:"var(--goldSoft)",border:"1px solid #e8d598",borderRadius:8,padding:"10px 13px",fontSize:12,color:"var(--inkMid)"}}>
-              💡 <strong>Cómo hacerlo en móvil:</strong> mantén pulsado en el texto del anuncio → "Seleccionar todo" → "Copiar" → vuelve aquí y mantén pulsado en el cuadro de texto → "Pegar"
+        <div style={{ padding: "16px 22px 22px" }}>
+          {!prop && (
+            <div style={{ display: "flex", gap: 6, marginBottom: 16 }}>
+              <button className={`tab-btn${tab === "paste" ? " active" : ""}`} onClick={() => setTab("paste")}>📋 Pegar texto</button>
+              <button className={`tab-btn${tab === "form" ? " active" : ""}`} onClick={() => setTab("form")}>✏ Manual</button>
             </div>
-            <button className="btn-primary" onClick={doExtract} disabled={loading||(!pastedText.trim()&&!urlInput.trim())} style={{opacity:loading?0.6:1}}>
-              {loading?"Extrayendo datos con IA…":"✨ Extraer datos automáticamente"}
-            </button>
-          </div>
-        )}
+          )}
 
-        {tab==="form" && (
-          <div style={{display:"flex",flexDirection:"column",gap:14}}>
-            {form.error && <div style={{background:"#fef2f2",border:"1px solid #fccfcf",borderRadius:8,padding:"10px 13px",fontSize:12,color:"var(--accent)"}}>⚠ {form.error} — revisa los datos.</div>}
-            {field("Título","title","Ático en San Pedro…")}
-            {row2(<>
-              <div><label>Tipo de inmueble</label>
-                <select value={form.tipoInmueble||""} onChange={e=>s("tipoInmueble",e.target.value)}>
-                  <option value="">— Selecciona —</option>
-                  {["Piso","Adosado","Dúplex","Ático","Ático-dúplex"].map(t=><option key={t} value={t}>{t}</option>)}
+          {tab === "paste" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              <div><label className="label">URL (opcional)</label>
+                <input value={urlInput} onChange={e => setUrlInput(e.target.value)} placeholder="https://idealista.com/..." /></div>
+              <div><label className="label">Texto del anuncio</label>
+                <textarea value={pastedText} onChange={e => setPastedText(e.target.value)}
+                  placeholder="Abre el anuncio → Ctrl+A → Ctrl+C → pega aquí con Ctrl+V"
+                  style={{ minHeight: 160, resize: "vertical", fontSize: 12, lineHeight: 1.5 }} /></div>
+              <button className="btn btn-dark" onClick={doExtract} disabled={loading || (!pastedText.trim() && !urlInput.trim())} style={{ opacity: loading ? 0.6 : 1 }}>
+                {loading ? "Extrayendo…" : "✨ Extraer con IA"}
+              </button>
+            </div>
+          )}
+
+          {tab === "form" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+              {form.error && <div style={{ background: "var(--redBg)", border: "1px solid #fccfcf", borderRadius: 6, padding: "8px 12px", fontSize: 12, color: "var(--red)", marginBottom: 12 }}>⚠ {form.error}</div>}
+
+              {txtField("Título", "title", "Ático en San Pedro de Alcántara…")}
+
+              <div className="sec">Identificación</div>
+              {row2(<>
+                <div><label className="label">Tipo</label>
+                  <select value={form.tipoInmueble || ""} onChange={e => s("tipoInmueble", e.target.value)}>
+                    <option value="">—</option>
+                    {["Piso", "Adosado", "Dúplex", "Ático", "Ático-dúplex"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div><label className="label">Planta</label>
+                  <select value={form.planta || ""} onChange={e => s("planta", e.target.value)}>
+                    <option value="">—</option>
+                    {["Bajo", "1ª", "2ª", "3ª", "4ª", "5ª", "Ático"].map(t => <option key={t}>{t}</option>)}
+                  </select>
+                </div>
+              </>)}
+
+              <div className="sec">Económico</div>
+              {row2(<>
+                {numField("Precio", "price", "€")}
+                {numField("Comunidad", "comunidad", "€/mes")}
+                {numField("IBI", "ibi", "€/año")}
+                {numField("Dist. trabajo", "distanciaKm", "km")}
+              </>)}
+
+              <div className="sec">Superficie</div>
+              {row2(<>
+                {numField("M² útiles", "sizeUtil")}
+                {numField("M² construidos", "sizeConstruida")}
+              </>)}
+
+              <div className="sec">Distribución</div>
+              {row2(<>
+                {numField("Habitaciones", "rooms")}
+                {numField("Baños", "bathrooms")}
+              </>)}
+
+              <div className="sec">Orientación</div>
+              <select value={form.orientacion || ""} onChange={e => s("orientacion", e.target.value)}>
+                <option value="">—</option>
+                {["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste", "Norte-Sur", "Este-Oeste"].map(t => <option key={t}>{t}</option>)}
+              </select>
+
+              <div className="sec">Localización</div>
+              {txtField("Dirección", "address", "C/ …")}
+              <div style={{ marginTop: 8 }}>
+                <label className="label">Municipio / zona</label>
+                <select value={form.zone || ""} onChange={e => s("zone", e.target.value)}>
+                  <option value="">—</option>
+                  {ZONES.map(z => <option key={z}>{z}</option>)}
                 </select>
               </div>
-              <div><label>Planta</label>
-                <select value={form.planta||""} onChange={e=>s("planta",e.target.value)}>
-                  <option value="">— Selecciona —</option>
-                  {["Bajo","1ª","2ª","3ª","4ª","5ª","Ático"].map(t=><option key={t} value={t}>{t}</option>)}
-                </select>
-              </div>
-              {field("Precio (€)","price","320000","number")}
-              {field("Tamaño (m²)","size","90","number")}
-              {field("Habitaciones","rooms","3","number")}
-              {field("Baños","bathrooms","2","number")}
-              {field("Dist. trabajo (km)","distanciaKm","8","number")}
-              {field("Comunidad (€/mes)","comunidad","120","number")}
-            </>)}
-            <div><label>Orientación</label>
-              <select value={form.orientacion||""} onChange={e=>s("orientacion",e.target.value)}>
-                <option value="">— Selecciona —</option>
-                {["Norte","Noreste","Este","Sureste","Sur","Suroeste","Oeste","Noroeste","Norte-Sur","Este-Oeste"].map(t=><option key={t} value={t}>{t}</option>)}
-              </select>
-            </div>
-            {field("Dirección","address","C/ ...")}
-            <div><label>Zona / municipio</label>
-              <select value={form.zone||""} onChange={e=>s("zone",e.target.value)}>
-                <option value="">— Selecciona —</option>
-                {["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"].map(z=><option key={z} value={z}>{z}</option>)}
-              </select>
-            </div>
-            {field("URL del anuncio","url","https://idealista.com/...")}
-            <div><label>Características</label>
-              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"],["piscina","🏊 Piscina"],["aireCond","❄️ Aire acond."]].map(([k,lbl])=>(
-                  <div key={k} className={`toggle-bool${form[k]?" on":""}`} onClick={()=>s(k,!form[k])}>{form[k]?"✓":"○"} {lbl}</div>
+
+              <div className="sec">Características</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {[["trastero", "📦 Trastero"], ["garaje", "🚗 Garaje"], ["piscina", "🏊 Piscina"], ["aireCond", "❄️ A/C"], ["ascensor", "🛗 Ascensor"], ["jardin", "🌳 Jardín"], ["amueblado", "🛋 Amueblado"]].map(([k, lbl]) => (
+                  <Toggle key={k} val={form[k]} onChange={v => s(k, v)} label={lbl} />
                 ))}
               </div>
-            </div>
-            <div><label>Certificado energético</label>
-              <div style={{display:"flex",gap:8}}>
-                {["Sí","En trámite"].map(v=>(
-                  <div key={v} className={`toggle-bool${form.certEnergetico===v?" on":""}`} onClick={()=>s("certEnergetico",form.certEnergetico===v?"":v)} style={{fontSize:13}}>
-                    {form.certEnergetico===v?"✓":""} {v}
+              <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <Toggle val={form.terraza} onChange={v => s("terraza", v)} label="🌿 Terraza" />
+                {form.terraza && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 12, color: "var(--inkDim)" }}>Número:</span>
+                    <input type="number" min="1" value={form.numTerrazas || 1} onChange={e => n("numTerrazas", e.target.value)} style={{ width: 60 }} />
                   </div>
+                )}
+              </div>
+
+              <div className="sec">Vistas</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["Campo de golf", "Mar", "Montaña", "Interior urbanización", "Jardín", "Piscina", "Calle", "Sin vistas"].map(v => (
+                  <Toggle key={v} val={(form.vistas || []).includes(v)} onChange={() => toggleVista(v)} label={v} />
                 ))}
               </div>
-            </div>
-            <div><label>Enviada a Laure</label>
-              <div className={`toggle-bool${form.enviadaLaure?" on":""}`} style={{display:"inline-flex"}} onClick={()=>s("enviadaLaure",!form.enviadaLaure)}>
-                {form.enviadaLaure?"✓ Enviada a Laure":"○ Pendiente de enviar a Laure"}
+
+              <div className="sec">Certificado energético</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["Sí", "En trámite", "No indicado"].map(v => (
+                  <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
+                ))}
+              </div>
+
+              <div className="sec">Comercialización</div>
+              {txtField("Inmobiliaria", "inmobiliaria", "Nombre de la agencia…")}
+              <div style={{ marginTop: 8 }}>{txtField("URL del anuncio", "url", "https://idealista.com/…")}</div>
+
+              <div className="sec">Estado</div>
+              <Toggle val={form.enviadaLaure} onChange={v => s("enviadaLaure", v)} label="✉ Enviada a Laure" />
+
+              <div className="sec">Notas</div>
+              <textarea value={form.notes} onChange={e => s("notes", e.target.value)} placeholder="Observaciones, pros, contras…" style={{ minHeight: 70, resize: "vertical" }} />
+
+              <div className="sec">Fotos</div>
+              <PhotoUploader photos={form.photos} onChange={v => s("photos", v)} />
+
+              <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+                <button className="btn btn-dark" onClick={() => onSave(form)} style={{ flex: 1 }}>Guardar propiedad</button>
+                <button className="btn btn-ghost" onClick={onClose}>Cancelar</button>
               </div>
             </div>
-            <div><label>Notas</label>
-              <textarea value={form.notes} onChange={e=>s("notes",e.target.value)} placeholder="Observaciones…" style={{minHeight:72,resize:"vertical"}}/></div>
-            <div><label>Fotos (capturas de pantalla)</label>
-              <PhotoUploader photos={form.photos} onChange={v=>s("photos",v)}/></div>
-            <div style={{display:"flex",gap:10,marginTop:4}}>
-              <button className="btn-primary" onClick={()=>onSave(form)} style={{flex:1}}>Guardar</button>
-              <button className="btn-secondary" onClick={onClose} style={{flex:1}}>Cancelar</button>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-function CriteriaModal({criteria, onChange, onClose}) {
-  const [loc,setLoc]=useState(criteria.map(c=>({...c})));
-  const set=(i,k,v)=>setLoc(p=>p.map((c,j)=>j===i?{...c,[k]:v}:c));
+// ── CriteriaModal ─────────────────────────────────────────────────────────────
+function CriteriaModal({ criteria, onChange, onClose }) {
+  const [loc, setLoc] = useState(criteria.map(c => ({ ...c })));
+  const set = (i, k, v) => setLoc(p => p.map((c, j) => j === i ? { ...c, [k]: v } : c));
   return (
-    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
+    <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
-          <h2 style={{fontFamily:"Playfair Display",fontSize:24,fontWeight:700}}>Mis criterios</h2>
-          <button onClick={onClose} style={{background:"none",border:"none",color:"var(--inkDim)",fontSize:22}}>×</button>
+        <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid var(--border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2 style={{ fontSize: 17 }}>Criterios de idoneidad</h2>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--inkDim)", fontSize: 20 }}>×</button>
         </div>
-        <p style={{fontSize:13,color:"var(--inkDim)",marginBottom:22}}>Peso 0 = ignorar · 5 = muy importante.</p>
-        <div style={{display:"flex",flexDirection:"column",gap:10}}>
-          {loc.map((c,i)=>(
-            <div key={c.id} style={{background:"var(--surfaceDim)",borderRadius:10,padding:"14px 16px",border:"1px solid var(--border)"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:c.type!=="boolean"?10:0}}>
-                <span style={{fontWeight:500,fontSize:14}}>{c.label}</span>
-                <div style={{display:"flex",gap:4}}>
-                  {[0,1,2,3,4,5].map(w=>(
-                    <button key={w} className={`weight-btn${c.weight===w?" active":""}`} onClick={()=>set(i,"weight",w)}>{w}</button>
-                  ))}
+        <div style={{ padding: "16px 22px 22px" }}>
+          <p style={{ fontSize: 12, color: "var(--inkDim)", marginBottom: 14, lineHeight: 1.5 }}>Define qué importa y cuánto. Peso 0 = ignorar, 5 = decisivo. Estos pesos calculan el índice de idoneidad de cada propiedad.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {loc.map((c, i) => (
+              <div key={c.id} style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "11px 13px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: c.type !== "boolean" && c.weight > 0 ? 8 : 0 }}>
+                  <span style={{ fontWeight: 500, fontSize: 13 }}>{c.label}</span>
+                  <div style={{ display: "flex", gap: 3 }}>
+                    {[0, 1, 2, 3, 4, 5].map(w => (
+                      <button key={w} className={`w-btn${c.weight === w ? " active" : ""}`} onClick={() => set(i, "weight", w)}>{w}</button>
+                    ))}
+                  </div>
                 </div>
+                {c.type !== "boolean" && c.weight > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: 11, color: "var(--inkDim)" }}>Objetivo:</span>
+                    <input type="number" value={c.target} onChange={e => set(i, "target", Number(e.target.value))} style={{ width: 100 }} />
+                    <span style={{ fontSize: 11, color: "var(--inkDim)" }}>{c.unit}</span>
+                  </div>
+                )}
               </div>
-              {c.type!=="boolean"&&c.weight>0&&(
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <span style={{fontSize:12,color:"var(--inkDim)"}}>Objetivo:</span>
-                  <input type="number" value={c.target} onChange={e=>set(i,"target",Number(e.target.value))} style={{width:110}}/>
-                  <span style={{fontSize:12,color:"var(--inkDim)"}}>{c.unit}</span>
-                </div>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
+          <button className="btn btn-dark" onClick={() => { onChange(loc); onClose(); }} style={{ width: "100%", marginTop: 14 }}>Aplicar</button>
         </div>
-        <button className="btn-primary" onClick={()=>{onChange(loc);onClose();}} style={{width:"100%",marginTop:20}}>Aplicar criterios</button>
       </div>
     </div>
   );
 }
 
-function DetailModal({prop, scored, onClose, onEdit, onDelete, onToggleLaure}) {
-  const {pts,bd}=scored; const c=scoreColor(pts);
-  const [lightbox,setLightbox]=useState(null);
-  const photos=prop.photos||[];
+// ── DetailModal ───────────────────────────────────────────────────────────────
+function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLaure }) {
+  const { pts, bd } = scored;
+  const [lightbox, setLightbox] = useState(null);
+  const photos = prop.photos || [];
+  const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
+  const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
+
+  const Cell = ({ label, val }) => {
+    if (!val && val !== 0) return null;
+    if (val === 0) return null;
+    return (
+      <div className="dcell">
+        <div className="dcell-l">{label}</div>
+        <div className="dcell-v">{val}</div>
+      </div>
+    );
+  };
 
   return (
-    <div className="modal-bg" onMouseDown={e=>e.target===e.currentTarget&&onClose()}>
-      <div className="modal-box" style={{maxWidth:600}}>
-        {photos.length>0 && (
-          <img src={photos[0]} alt="" onClick={()=>setLightbox(photos[0])}
-            style={{width:"100%",maxHeight:240,objectFit:"cover",borderRadius:12,marginBottom:16,cursor:"zoom-in"}}/>
+    <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && onClose()}>
+      <div className="modal-box" style={{ maxWidth: 620 }}>
+        {photos.length > 0 && (
+          <img src={photos[0]} alt="" onClick={() => setLightbox(photos[0])}
+            style={{ width: "100%", height: 200, objectFit: "cover", borderRadius: "12px 12px 0 0", cursor: "zoom-in" }} />
         )}
-        <div style={{background:"var(--bg2)",borderRadius:12,padding:"20px 22px",marginBottom:18,position:"relative",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:-30,right:-30,width:120,height:120,borderRadius:"50%",background:c,opacity:0.06}}/>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
-            <div style={{flex:1,paddingRight:12}}>
-              <h2 style={{fontFamily:"Playfair Display",fontSize:22,fontWeight:700,lineHeight:1.25,marginBottom:4}}>{prop.title}</h2>
-              <p style={{color:"var(--inkDim)",fontSize:13}}>{prop.address}{prop.zone?` · ${prop.zone}`:""}</p>
+
+        <div style={{ padding: "18px 22px 14px", borderBottom: "1px solid var(--border)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
+                {prop.tipoInmueble && <span className="tag tag-blue">{prop.tipoInmueble}</span>}
+                {prop.planta && <span className="tag">{prop.planta}</span>}
+                {prop.zone && <span className="tag">{prop.zone}</span>}
+              </div>
+              <h2 style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 3 }}>{prop.title}</h2>
+              {prop.address && <div style={{ fontSize: 12, color: "var(--inkDim)" }}>{prop.address}</div>}
             </div>
-            <div style={{textAlign:"center",flexShrink:0}}>
-              <ScoreChip pts={pts} size={60}/>
-              <div style={{fontSize:10,color:"var(--inkDim)",marginTop:4}}>IDONEIDAD</div>
-            </div>
-          </div>
-          <div style={{marginTop:14,display:"flex",gap:20,flexWrap:"wrap"}}>
-            <div>
-              {(prop.tipoInmueble||prop.planta)&&<div style={{fontSize:12,color:"var(--inkDim)",marginBottom:4}}>{[prop.tipoInmueble,prop.planta].filter(Boolean).join(" · ")}</div>}
-              <div style={{fontFamily:"Playfair Display",fontSize:26,fontWeight:700,color:"var(--accent)"}}>{prop.price?.toLocaleString("es-ES")} €</div>
-              {prop.size&&prop.price&&<div style={{fontSize:12,color:"var(--inkDim)"}}>{Math.round(prop.price/prop.size).toLocaleString("es-ES")} €/m²</div>}
-            </div>
-            <div style={{display:"flex",gap:12,alignItems:"flex-end",flexWrap:"wrap"}}>
-              {prop.size&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:600}}>{prop.size}</div><div style={{fontSize:11,color:"var(--inkDim)"}}>m²</div></div>}
-              {prop.rooms&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:600}}>{prop.rooms}</div><div style={{fontSize:11,color:"var(--inkDim)"}}>hab.</div></div>}
-              {prop.bathrooms&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:600}}>{prop.bathrooms}</div><div style={{fontSize:11,color:"var(--inkDim)"}}>baños</div></div>}
-              {prop.distanciaKm!=null&&<div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:600}}>{prop.distanciaKm}</div><div style={{fontSize:11,color:"var(--inkDim)"}}>km trab.</div></div>}
-            </div>
+            <ScoreRing pts={pts} size={58} rank={rank} />
           </div>
         </div>
 
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16}}>
-          {prop.tipoInmueble&&<span className="tag" style={{background:"var(--blueSoft)",borderColor:"#93b4e8",color:"var(--blue)"}}>{prop.tipoInmueble}</span>}
-          {prop.planta&&<span className="tag">🏢 {prop.planta}</span>}
-          {prop.orientacion&&<span className="tag">🧭 {prop.orientacion}</span>}
-          {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["terraza","🌿 Terraza"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"]].map(([k,lbl])=>(
-            <span key={k} className={`tag ${prop[k]?"yes":"no"}`}>{lbl}</span>
-          ))}
-          {prop.certEnergetico&&<span className="tag" style={{background:"var(--greenSoft)",borderColor:"#a8d5be",color:"var(--green)"}}>⚡ Cert. {prop.certEnergetico}</span>}
-          {prop.comunidad&&<span className="tag">🏢 {prop.comunidad} €/mes</span>}
-          <button className={`laure-btn ${prop.enviadaLaure?"sent":"unsent"}`} onClick={()=>onToggleLaure(prop.id)}>
-            {prop.enviadaLaure?"✉ Enviada a Laure":"✉ Enviar a Laure"}
-          </button>
-        </div>
-
-        <div style={{marginBottom:18}}>
-          <div style={{fontSize:12,color:"var(--inkDim)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:10}}>Desglose criterios</div>
-          <BreakdownBar bd={bd}/>
-        </div>
-
-        {prop.notes&&(
-          <div style={{background:"var(--goldSoft)",border:"1px solid #e8d598",borderRadius:10,padding:"12px 14px",fontSize:13,color:"var(--inkMid)",lineHeight:1.6,marginBottom:16}}>
-            {prop.notes}
-          </div>
-        )}
-
-        {photos.length>1&&(
-          <div style={{marginBottom:16}}>
-            <div style={{fontSize:12,color:"var(--inkDim)",letterSpacing:"0.08em",textTransform:"uppercase",marginBottom:8}}>Fotos ({photos.length})</div>
-            <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-              {photos.map((src,i)=>(
-                <img key={i} src={src} className="photo-thumb" alt="" onClick={()=>setLightbox(src)}/>
-              ))}
+        <div style={{ padding: "16px 22px 20px" }}>
+          {/* Price block */}
+          <div style={{ background: "var(--dim)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>
+                  {prop.price ? Number(prop.price).toLocaleString("es-ES") + " €" : "—"}
+                </div>
+                <div style={{ fontSize: 13, color: "var(--inkMid)", marginTop: 4, fontWeight: 500 }}>{ratio}</div>
+              </div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                {prop.sizeUtil > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeUtil}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² útiles</div></div>}
+                {prop.sizeConstruida > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeConstruida}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² const.</div></div>}
+                {prop.rooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.rooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>hab.</div></div>}
+                {prop.bathrooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.bathrooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>baños</div></div>}
+              </div>
             </div>
           </div>
-        )}
 
-        {prop.url&&(
-          <a href={prop.url} target="_blank" rel="noreferrer"
-            style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginBottom:16,color:"var(--blue)",fontSize:13,textDecoration:"none",fontWeight:600,background:"var(--blueSoft)",border:"1.5px solid #93b4e8",borderRadius:9,padding:"10px 0"}}>
-            🔗 Ver anuncio original en el portal ↗
-          </a>
-        )}
+          {/* Data grid */}
+          <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--inkFaint)", marginBottom: 8 }}>Datos</div>
+          <div className="dgrid" style={{ marginBottom: 14 }}>
+            <Cell label="Orientación" val={prop.orientacion} />
+            <Cell label="Dist. trabajo" val={prop.distanciaKm > 0 ? prop.distanciaKm + " km" : null} />
+            <Cell label="Comunidad" val={prop.comunidad > 0 ? Number(prop.comunidad).toLocaleString("es-ES") + " €/mes" : null} />
+            <Cell label="IBI" val={prop.ibi > 0 ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null} />
+            <Cell label="Cert. energético" val={prop.certEnergetico} />
+            <Cell label="Inmobiliaria" val={prop.inmobiliaria} />
+          </div>
 
-        <div style={{display:"flex",gap:10}}>
-          <button className="btn-secondary" onClick={()=>onEdit(prop)} style={{flex:1}}>✏ Editar</button>
-          <button onClick={()=>{if(window.confirm("¿Eliminar?")){{onDelete(prop.id);onClose();}}}}
-            style={{background:"#fef2f2",color:"var(--accent)",border:"1.5px solid #fccfcf",borderRadius:9,padding:"10px 18px",fontSize:14}}>🗑</button>
-          <button className="btn-secondary" onClick={onClose}>Cerrar</button>
+          {/* Tags */}
+          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
+            {[["trastero", "📦 Trastero"], ["garaje", "🚗 Garaje"], ["piscina", "🏊 Piscina"], ["aireCond", "❄️ A/C"], ["ascensor", "🛗 Ascensor"], ["jardin", "🌳 Jardín"], ["amueblado", "🛋 Amueblado"]].map(([k, lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
+            {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
+            {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
+          </div>
+
+          {/* Laure */}
+          <div style={{ marginBottom: 14 }}>
+            <Toggle val={prop.enviadaLaure} onChange={() => onToggleLaure(prop.id)} label={prop.enviadaLaure ? "✉ Enviada a Laure" : "✉ Pendiente de enviar a Laure"} />
+          </div>
+
+          {/* Notes */}
+          {prop.notes && (
+            <div style={{ background: "var(--amberBg)", border: "1px solid #e8d598", borderRadius: 8, padding: "10px 13px", fontSize: 13, color: "var(--inkMid)", lineHeight: 1.6, marginBottom: 14 }}>
+              {prop.notes}
+            </div>
+          )}
+
+          {/* Breakdown */}
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, marginBottom: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--inkFaint)", marginBottom: 10 }}>Índice de idoneidad — desglose</div>
+            <BreakdownBar bd={bd} />
+          </div>
+
+          {/* More photos */}
+          {photos.length > 1 && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--inkFaint)", marginBottom: 8 }}>Fotos</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {photos.map((src, i) => <img key={i} src={src} className="photo-thumb" alt="" onClick={() => setLightbox(src)} />)}
+              </div>
+            </div>
+          )}
+
+          {/* Link */}
+          {prop.url && (
+            <a href={prop.url} target="_blank" rel="noreferrer"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginBottom: 14, color: "var(--blue)", fontSize: 13, textDecoration: "none", fontWeight: 500, background: "var(--blueBg)", border: "1px solid #93b4e8", borderRadius: 8, padding: "8px 0" }}>
+              🔗 Ver anuncio original ↗
+            </a>
+          )}
+
+          {/* Actions */}
+          <div style={{ display: "flex", gap: 7 }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => onEdit(prop)} style={{ flex: 1 }}>✏ Editar</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => printPDF(prop, pts, rank)}>🖨 PDF</button>
+            <button className="btn btn-danger btn-sm" onClick={() => { if (window.confirm("¿Eliminar?")) { onDelete(prop.id); onClose(); } }}>🗑</button>
+            <button className="btn btn-ghost btn-sm" onClick={onClose}>Cerrar</button>
+          </div>
         </div>
       </div>
-      {lightbox&&<Lightbox src={lightbox} onClose={()=>setLightbox(null)}/>}
+      {lightbox && <Lightbox src={lightbox} onClose={() => setLightbox(null)} />}
     </div>
   );
 }
 
+// ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
-  const [props,setProps]=useState([]);
-  const [criteria,setCriteria]=useState(DEFAULT_CRITERIA);
-  const [loaded,setLoaded]=useState(false);
-  const [showAdd,setShowAdd]=useState(false);
-  const [editing,setEditing]=useState(null);
-  const [showCrit,setShowCrit]=useState(false);
-  const [detail,setDetail]=useState(null);
-  const [sort,setSort]=useState("score");
-  const [filter,setFilter]=useState("");
+  const [props, setProps] = useState([]);
+  const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
+  const [loaded, setLoaded] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [showCrit, setShowCrit] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [sort, setSort] = useState("score");
+  const [filter, setFilter] = useState("");
 
-  useEffect(()=>{
-    const unsubProps=onSnapshot(collection(db,"properties"),snap=>{
-      setProps(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoaded(true);
+  useEffect(() => {
+    const u1 = onSnapshot(collection(db, "properties"), snap => {
+      setProps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setLoaded(true);
     });
-    const unsubCrit=onSnapshot(doc(db,"config","criteria"),snap=>{
-      if(snap.exists()) setCriteria(snap.data().list);
+    const u2 = onSnapshot(doc(db, "config", "criteria"), snap => {
+      if (snap.exists()) setCriteria(snap.data().list);
     });
-    return()=>{unsubProps();unsubCrit();};
-  },[]);
+    return () => { u1(); u2(); };
+  }, []);
 
-  const saveProperty=async(form)=>{
-    const id=editing?editing.id:String(Date.now());
-    const p={...form,price:Number(form.price)||0,size:Number(form.size)||0,rooms:Number(form.rooms)||0,bathrooms:Number(form.bathrooms)||0,
-      distanciaKm:form.distanciaKm!==""&&form.distanciaKm!=null?Number(form.distanciaKm):null,
-      comunidad:form.comunidad!==""&&form.comunidad!=null?Number(form.comunidad):null,
-      photos:form.photos||[]};
+  const saveProperty = async (form) => {
+    const id = editing ? editing.id : String(Date.now());
+    const p = {
+      ...form,
+      price: Number(form.price) || 0, rooms: Number(form.rooms) || 0, bathrooms: Number(form.bathrooms) || 0,
+      sizeUtil: Number(form.sizeUtil) || 0, sizeConstruida: Number(form.sizeConstruida) || 0,
+      distanciaKm: Number(form.distanciaKm) || 0, comunidad: Number(form.comunidad) || 0,
+      ibi: Number(form.ibi) || 0, numTerrazas: Number(form.numTerrazas) || 0,
+      photos: form.photos || [],
+    };
     delete p.id;
-    await setDoc(doc(db,"properties",id),p);
+    await setDoc(doc(db, "properties", id), p);
     setShowAdd(false); setEditing(null);
   };
 
-  const deleteProperty=async(id)=>{await deleteDoc(doc(db,"properties",id));};
-
-  const saveCriteria=async(newCrit)=>{
-    await setDoc(doc(db,"config","criteria"),{list:newCrit}); setCriteria(newCrit);
+  const deleteProperty = async (id) => { await deleteDoc(doc(db, "properties", id)); };
+  const saveCriteria = async (nc) => { await setDoc(doc(db, "config", "criteria"), { list: nc }); setCriteria(nc); };
+  const toggleLaure = async (id) => {
+    const prop = props.find(p => p.id === id); if (!prop) return;
+    const updated = { ...prop, enviadaLaure: !prop.enviadaLaure }; delete updated.id;
+    await setDoc(doc(db, "properties", id), updated);
+    setDetail(d => d && d.id === id ? { ...d, enviadaLaure: !d.enviadaLaure } : d);
   };
+  const startEdit = (p) => { setEditing(p); setShowAdd(true); setDetail(null); };
 
-  const toggleLaure=async(id)=>{
-    const prop=props.find(p=>p.id===id); if(!prop) return;
-    const updated={...prop,enviadaLaure:!prop.enviadaLaure}; delete updated.id;
-    await setDoc(doc(db,"properties",id),updated);
-    setDetail(d=>d&&d.id===id?{...d,enviadaLaure:!d.enviadaLaure}:d);
-  };
+  const scored = props.map(p => ({ ...p, ...calcScore(p, criteria) }));
+  const sortedAll = [...scored].sort((a, b) => b.pts - a.pts);
+  const rankMap = Object.fromEntries(sortedAll.map((p, i) => [p.id, i + 1]));
 
-  const startEdit=(p)=>{setEditing(p);setShowAdd(true);setDetail(null);};
-  const scored=props.map(p=>({...p,...score(p,criteria)}));
-  const visible=scored
-    .filter(p=>!filter||[p.title,p.zone,p.address].join(" ").toLowerCase().includes(filter.toLowerCase()))
-    .sort((a,b)=>sort==="score"?b.pts-a.pts:sort==="price"?(a.price||0)-(b.price||0):(b.size||0)-(a.size||0));
-  const best=Math.max(0,...scored.map(s=>s.pts));
-  const avgPrice=props.length?Math.round(props.reduce((a,b)=>a+(b.price||0),0)/props.length):0;
+  const visible = scored
+    .filter(p => !filter || [p.title, p.zone, p.address].join(" ").toLowerCase().includes(filter.toLowerCase()))
+    .sort((a, b) => sort === "score" ? b.pts - a.pts : sort === "price" ? (a.price || 0) - (b.price || 0) : (b.sizeUtil || 0) - (a.sizeUtil || 0));
 
-  if(!loaded) return (
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",color:"var(--inkDim)",fontFamily:"Outfit,sans-serif"}}>
-      <div className="pulse">Conectando…</div>
+  const best = Math.max(0, ...scored.map(s => s.pts));
+  const avgPrice = props.length ? Math.round(props.reduce((a, b) => a + (b.price || 0), 0) / props.length) : 0;
+
+  if (!loaded) return (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--inkDim)", fontFamily: "Inter,sans-serif" }}>
+      <div className="pulse" style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}>Conectando</div>
     </div>
   );
 
   return (
     <>
       <style>{css}</style>
-      <div className="header-stripe">
-        <div style={{fontFamily:"Playfair Display",fontSize:22,fontWeight:700,color:"white"}}>
-          Casa<em style={{color:"#e8a89e",fontStyle:"italic"}}>Finder</em>
+
+      <div className="header no-print">
+        <h1 style={{ fontSize: 15, fontWeight: 600, color: "white", letterSpacing: "0.02em" }}>CASA<span style={{ color: "#555", fontWeight: 300 }}>FINDER</span></h1>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginRight: "auto", marginLeft: 6 }}>
+          <span className="live-dot" />
+          <span style={{ fontSize: 10, color: "#444", letterSpacing: "0.06em" }}>LIVE</span>
         </div>
-        <div style={{display:"flex",alignItems:"center",gap:5}}>
-          <span className="live-dot"/><span style={{fontSize:11,color:"#ffffff55"}}>en vivo</span>
-        </div>
-        <div style={{flex:1}}/>
-        <input value={filter} onChange={e=>setFilter(e.target.value)} placeholder="Buscar…"
-          style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,color:"white",padding:"7px 13px",fontSize:13,width:150,outline:"none"}}/>
-        <select value={sort} onChange={e=>setSort(e.target.value)}
-          style={{background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:8,color:"white",padding:"7px 10px",fontSize:13,outline:"none"}}>
-          <option value="score">Por idoneidad</option>
-          <option value="price">Por precio</option>
-          <option value="size">Por tamaño</option>
+        <input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Buscar…"
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 11px", fontSize: 12, width: 130, outline: "none" }} />
+        <select value={sort} onChange={e => setSort(e.target.value)}
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 9px", fontSize: 12, outline: "none" }}>
+          <option value="score">Ranking</option>
+          <option value="price">Precio</option>
+          <option value="size">Tamaño</option>
         </select>
-        <button onClick={()=>setShowCrit(true)} className="btn-secondary"
-          style={{fontSize:13,background:"rgba(255,255,255,0.08)",border:"1px solid rgba(255,255,255,0.18)",color:"rgba(255,255,255,0.8)"}}>⚙ Criterios</button>
-        <button onClick={()=>{setEditing(null);setShowAdd(true);}} className="btn-primary">+ Añadir</button>
+        <button className="btn btn-ghost btn-sm" onClick={() => setShowCrit(true)}
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+          ⚙ Criterios
+        </button>
+        <button className="btn btn-sm" onClick={() => { setEditing(null); setShowAdd(true); }}
+          style={{ background: "white", color: "var(--ink)", fontWeight: 600 }}>
+          + Añadir
+        </button>
       </div>
 
-      <div style={{padding:"16px 28px",display:"flex",gap:12,flexWrap:"wrap",borderBottom:"1px solid var(--border)"}}>
-        {[["Propiedades",props.length],["Mejor puntuación",best+" / 100"],["Precio medio",avgPrice?avgPrice.toLocaleString("es-ES")+" €":"—"],["Enviadas a Laure",props.filter(p=>p.enviadaLaure).length+" de "+props.length]].map(([lbl,val])=>(
-          <div key={lbl} className="stat-pill">
-            <div style={{fontSize:11,color:"var(--inkDim)",letterSpacing:"0.07em",textTransform:"uppercase",marginBottom:3}}>{lbl}</div>
-            <div style={{fontFamily:"Playfair Display",fontSize:20,fontWeight:500}}>{val}</div>
+      <div className="stat-bar no-print">
+        {[
+          ["Propiedades", props.length],
+          ["Mejor puntuación", best > 0 ? best + " / 100" : "—"],
+          ["Precio medio", avgPrice ? Number(avgPrice).toLocaleString("es-ES") + " €" : "—"],
+          ["Enviadas a Laure", props.filter(p => p.enviadaLaure).length + " / " + props.length],
+        ].map(([l, v]) => (
+          <div key={l} className="stat-item">
+            <div style={{ fontSize: 10, color: "var(--inkFaint)", letterSpacing: "0.07em", textTransform: "uppercase" }}>{l}</div>
+            <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "Space Grotesk,sans-serif", marginTop: 2 }}>{v}</div>
           </div>
         ))}
       </div>
 
-      <div style={{padding:"24px 28px",display:"grid",gridTemplateColumns:"repeat(auto-fill, minmax(290px, 1fr))",gap:16}}>
-        {visible.map((p,i)=>{
-          const isBest=p.pts===best&&best>0; const photos=p.photos||[];
+      <div style={{ padding: "18px 22px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(276px, 1fr))", gap: 12 }}>
+        {visible.map((p, i) => {
+          const rank = rankMap[p.id];
+          const photos = p.photos || [];
+          const m2 = p.sizeUtil || p.sizeConstruida || 0;
+          const ratio = m2 && p.price ? Math.round(p.price / m2).toLocaleString("es-ES") + " €/m²" : "";
           return (
-            <div key={p.id} className="prop-card card-enter"
-              style={{animationDelay:`${i*0.05}s`,borderColor:isBest?"#c0392b33":undefined}}
-              onClick={()=>setDetail(p)}>
-              {isBest&&<div style={{position:"absolute",top:14,right:14,background:"var(--accent)",color:"white",borderRadius:20,padding:"2px 9px",fontSize:11,fontWeight:600}}>★ TOP</div>}
-
-              {photos.length>0&&(
-                <img src={photos[0]} alt="" style={{width:"100%",height:120,objectFit:"cover",borderRadius:8,marginBottom:12}}/>
-              )}
-
-              <div style={{display:"flex",alignItems:"flex-start",gap:13,marginBottom:12}}>
-                <ScoreChip pts={p.pts}/>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontFamily:"Playfair Display",fontWeight:600,fontSize:15,lineHeight:1.25,marginBottom:3,overflow:"hidden",display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical"}}>{p.title}</div>
-                  <div style={{color:"var(--inkDim)",fontSize:12}}>{p.zone||p.address}</div>
+            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s` }} onClick={() => setDetail(p)}>
+              <div className="rank-num">#{rank}</div>
+              {photos.length > 0 && <img src={photos[0]} alt="" style={{ width: "100%", height: 106, objectFit: "cover", borderRadius: "10px 10px 0 0" }} />}
+              <div style={{ padding: "12px 13px 11px" }}>
+                <div style={{ display: "flex", gap: 9, marginBottom: 9 }}>
+                  <ScoreRing pts={p.pts} size={46} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 13, lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.title}</div>
+                    <div style={{ color: "var(--inkDim)", fontSize: 11, marginTop: 2 }}>{p.zone || p.address}</div>
+                  </div>
                 </div>
-              </div>
-
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",marginBottom:12}}>
-                <div>
-                  <div style={{fontFamily:"Playfair Display",fontSize:22,fontWeight:700,color:"var(--accent)",lineHeight:1}}>{p.price?.toLocaleString("es-ES")} €</div>
-                  <div style={{fontSize:12,color:"var(--inkDim)",marginTop:2}}>{p.size?p.size+" m²":""}{p.size&&p.rooms?" · ":""}{p.rooms?p.rooms+" hab.":""}</div>
+                <div style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                    {p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}
+                  </div>
+                  <div style={{ fontSize: 11, color: "var(--inkMid)", marginTop: 3 }}>
+                    {ratio}{ratio && m2 ? " · " : ""}{m2 ? m2 + " m²" : ""}{m2 && p.rooms ? " · " : ""}{p.rooms ? p.rooms + " hab." : ""}
+                  </div>
                 </div>
-                {p.distanciaKm!=null&&<div style={{textAlign:"right"}}><div style={{fontSize:15,fontWeight:600}}>{p.distanciaKm} km</div><div style={{fontSize:11,color:"var(--inkDim)"}}>al trabajo</div></div>}
-              </div>
-
-              <div style={{display:"flex",gap:5,flexWrap:"wrap",marginBottom:10}}>
-                {p.tipoInmueble&&<span className="tag" style={{background:"var(--blueSoft)",borderColor:"#93b4e8",color:"var(--blue)",fontSize:11}}>{p.tipoInmueble}</span>}
-                {p.planta&&<span className="tag" style={{fontSize:11}}>{p.planta}</span>}
-                {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"]].map(([k,e])=>p[k]?<span key={k} className="tag yes">{e}</span>:null)}
-              </div>
-
-              <div style={{marginBottom:10}} onClick={e=>{e.stopPropagation();toggleLaure(p.id);}}>
-                <button className={`laure-btn ${p.enviadaLaure?"sent":"unsent"}`} style={{fontSize:11}}>
-                  {p.enviadaLaure?"✉ Enviada a Laure":"✉ Pendiente · enviar a Laure"}
-                </button>
-              </div>
-
-              <div style={{display:"flex",gap:3,height:4}}>
-                {p.bd.filter(b=>b.weight>0).map(b=>(
-                  <div key={b.id} title={b.label+": "+Math.round(b.s*100)+"%"}
-                    style={{flex:b.weight,borderRadius:2,background:scoreColor(Math.round(b.s*100)),opacity:0.65}}/>
-                ))}
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                  {p.tipoInmueble && <span className="tag tag-blue">{p.tipoInmueble}</span>}
+                  {p.planta && <span className="tag">{p.planta}</span>}
+                  {[["trastero", "📦"], ["garaje", "🚗"], ["terraza", "🌿"], ["piscina", "🏊"], ["aireCond", "❄️"], ["ascensor", "🛗"]].map(([k, e]) => p[k] ? <span key={k} className="tag tag-green">{e}</span> : null)}
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500 }}
+                    onClick={e => { e.stopPropagation(); toggleLaure(p.id); }}>
+                    {p.enviadaLaure ? "✉ Enviada a Laure" : "✉ Pendiente Laure"}
+                  </span>
+                  <button className="print-ico btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); printPDF(p, p.pts, rank); }}
+                    style={{ padding: "3px 8px", fontSize: 12 }}>🖨</button>
+                </div>
+                <div style={{ display: "flex", gap: 2, height: 3, marginTop: 9 }}>
+                  {p.bd.filter(b => b.weight > 0).map(b => (
+                    <div key={b.id} title={b.label + ": " + Math.round(b.s * 100) + "%"}
+                      style={{ flex: b.weight, borderRadius: 1, background: scoreColor(Math.round(b.s * 100)), opacity: 0.45 }} />
+                  ))}
+                </div>
               </div>
             </div>
           );
         })}
-        {visible.length===0&&(
-          <div style={{gridColumn:"1/-1",textAlign:"center",padding:"72px 0",color:"var(--inkDim)"}}>
-            <div style={{fontFamily:"Playfair Display",fontSize:48,marginBottom:12}}>🏠</div>
-            <div style={{fontSize:16,fontWeight:500,marginBottom:6}}>Sin propiedades todavía</div>
-            <div style={{fontSize:13}}>Pulsa "+ Añadir" para empezar.</div>
+        {visible.length === 0 && (
+          <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "80px 0", color: "var(--inkFaint)" }}>
+            <div style={{ fontSize: 28, marginBottom: 10 }}>□</div>
+            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Sin propiedades</div>
+            <div style={{ fontSize: 12 }}>Pulsa "+ Añadir" para comenzar</div>
           </div>
         )}
       </div>
 
-      {showAdd&&<PropertyModal prop={editing} onSave={saveProperty} onClose={()=>{setShowAdd(false);setEditing(null);}}/>}
-      {showCrit&&<CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={()=>setShowCrit(false)}/>}
-      {detail&&<DetailModal prop={detail} scored={score(detail,criteria)} onClose={()=>setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} onToggleLaure={toggleLaure}/>}
+      {showAdd && <PropertyModal prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
+      {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
+      {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} onToggleLaure={toggleLaure} />}
     </>
   );
 }
