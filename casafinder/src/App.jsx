@@ -15,9 +15,30 @@ function calcScore(prop, criteria) {
     if (!c.weight) return;
     const v = prop[c.id];
     let s = 0;
-    if (c.type === "boolean") s = v ? 1 : 0;
-    else if (c.type === "lower_better") s = v == null || v === 0 ? 0.5 : v <= c.target ? 1 : Math.max(0, 1 - (v - c.target) / c.target);
-    else s = v == null || v === 0 ? 0.5 : v >= c.target ? 1 : Math.max(0, v / c.target);
+    if (c.type === "boolean") {
+      s = v ? 1 : 0;
+    } else if (c.type === "range") {
+      // min = best value (100%), max = worst value (0%)
+      if (v == null || v === 0) { s = 0.5; }
+      else {
+        const lo = Math.min(c.min, c.max), hi = Math.max(c.min, c.max);
+        const best = c.min, worst = c.max;
+        if (best < worst) { // lower is better (price, comunidad, distancia)
+          s = v <= best ? 1 : v >= worst ? 0 : 1 - (v - best) / (worst - best);
+        } else { // higher is better (m²)
+          s = v >= best ? 1 : v <= worst ? 0 : (v - worst) / (best - worst);
+        }
+      }
+    } else if (c.type === "orientacion") {
+      s = v && ORIENTACION_SCORE[v] != null ? ORIENTACION_SCORE[v] : 0.5;
+    } else if (c.type === "planta") {
+      if (!v) { s = 0.5; }
+      else { const rank = PLANTA_ORDER[v]; s = rank != null ? rank / 6 : 0.5; }
+    } else if (c.type === "vistas") {
+      const vistas = prop.vistas || [];
+      if (vistas.length === 0) { s = 0; }
+      else { s = Math.max(...vistas.map(vi => VISTAS_SCORE[vi] ?? 0)); }
+    }
     total += s * c.weight; max += c.weight;
     bd.push({ ...c, s, v });
   });
@@ -59,13 +80,43 @@ async function extractFromText(text, url) {
   }
 }
 
+// Distancias aproximadas desde punto central de cada zona a Marbella centro (C/ Mercado)
+const ZONE_DISTANCES = {
+  "Marbella": 1, "Nueva Andalucía": 4, "Puerto Banús": 6, "Las Chapas": 10,
+  "Elviria": 8, "San Pedro de Alcántara": 12, "Guadalmina": 14, "Cancelada": 18,
+  "Estepona": 28, "Selwo": 22, "Ojén": 8, "Benahavís": 18, "Istán": 12,
+  "Mijas": 20, "Mijas Costa": 22, "Fuengirola": 28, "Benalmádena": 35,
+  "Torremolinos": 42, "Málaga capital": 55, "Manilva": 50, "Sabinillas": 48, "Casares": 44,
+};
+
+const PLANTA_ORDER = { "Bajo": 0, "1ª": 1, "2ª": 2, "3ª": 3, "4ª": 4, "5ª": 5, "Ático": 6 };
+const ORIENTACION_SCORE = {
+  "Sur": 1, "Suroeste": 0.85, "Sureste": 0.85, "Este": 0.65, "Oeste": 0.65,
+  "Noroeste": 0.35, "Noreste": 0.35, "Norte": 0, "Norte-Sur": 0.9, "Este-Oeste": 0.7,
+};
+const VISTAS_SCORE = {
+  "Mar": 1, "Montaña": 0.85, "Campo de golf": 0.75,
+  "Jardín": 0.65, "Interior urbanización": 0.65, "Piscina": 0.55,
+  "Calle": 0.35, "Sin vistas": 0,
+};
+
 const DEFAULT_CRITERIA = [
-  { id: "price", label: "Precio", weight: 5, type: "lower_better", target: 350000, unit: "€" },
-  { id: "sizeUtil", label: "Metros útiles", weight: 4, type: "higher_better", target: 90, unit: "m²" },
-  { id: "trastero", label: "Trastero", weight: 3, type: "boolean" },
+  { id: "price", label: "Precio", weight: 5, type: "range", min: 240000, max: 320000, unit: "€", desc: "240k=100% · 320k=0%" },
+  { id: "sizeUtil", label: "M² útiles", weight: 4, type: "range", min: 140, max: 65, unit: "m²", desc: "140m²=100% · 65m²=0%" },
+  { id: "trastero", label: "Trastero", weight: 5, type: "boolean" },
   { id: "garaje", label: "Garaje", weight: 4, type: "boolean" },
   { id: "terraza", label: "Terraza", weight: 3, type: "boolean" },
-  { id: "distanciaKm", label: "Distancia trabajo", weight: 5, type: "lower_better", target: 10, unit: "km" },
+  { id: "piscina", label: "Piscina", weight: 2, type: "boolean" },
+  { id: "aireCond", label: "Aire acond.", weight: 2, type: "boolean" },
+  { id: "ascensor", label: "Ascensor", weight: 3, type: "boolean" },
+  { id: "jardin", label: "Jardín", weight: 2, type: "boolean" },
+  { id: "amueblado", label: "Amueblado", weight: 1, type: "boolean" },
+  { id: "orientacion", label: "Orientación", weight: 4, type: "orientacion" },
+  { id: "comunidad", label: "Comunidad", weight: 3, type: "range", min: 0, max: 250, unit: "€/mes", desc: "0€=100% · 250€=0%" },
+  { id: "ibi", label: "IBI", weight: 2, type: "range", min: 0, max: 1500, unit: "€/año", desc: "0€=100% · 1500€=0%" },
+  { id: "distanciaKm", label: "Distancia trabajo", weight: 4, type: "range", min: 0, max: 70, unit: "km", desc: "0km=100% · 70km=0%" },
+  { id: "planta", label: "Planta", weight: 3, type: "planta" },
+  { id: "vistas", label: "Vistas", weight: 4, type: "vistas" },
 ];
 
 const ZONES = ["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"];
@@ -220,7 +271,7 @@ function BreakdownBar({ bd }) {
             <span style={{ fontSize: 12, color: "var(--inkMid)" }}>{b.label}</span>
             <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: scoreColor(Math.round(b.s * 100)) }}>{Math.round(b.s * 100)}%</span>
-              <span style={{ fontSize: 10, color: "var(--inkFaint)" }}>importancia ×{b.weight}</span>
+              
             </div>
           </div>
           <div style={{ height: 4, background: "var(--dim)", borderRadius: 2, overflow: "hidden" }}>
@@ -410,6 +461,23 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               {txtField("Título", "title", "Ático en San Pedro de Alcántara…")}
 
+              <div className="sec">Localización</div>
+              <div>
+                <label className="label">Municipio / zona</label>
+                <select value={form.zone || ""} onChange={e => {
+                  const z = e.target.value;
+                  s("zone", z);
+                  if (ZONE_DISTANCES[z] != null) s("distanciaKm", ZONE_DISTANCES[z]);
+                }}>
+                  <option value="">—</option>
+                  {ZONES.map(z => <option key={z}>{z}</option>)}
+                </select>
+                {form.zone && ZONE_DISTANCES[form.zone] && (
+                  <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 3 }}>≈ {ZONE_DISTANCES[form.zone]} km al trabajo (estimado)</div>
+                )}
+              </div>
+              <div style={{ marginTop: 8 }}>{txtField("Dirección", "address", "C/ …")}</div>
+
               <div className="sec">Identificación</div>
               {row2(<>
                 <div><label className="label">Tipo</label>
@@ -452,15 +520,7 @@ function PropertyModal({ prop, onSave, onClose }) {
                 {["Norte", "Noreste", "Este", "Sureste", "Sur", "Suroeste", "Oeste", "Noroeste", "Norte-Sur", "Este-Oeste"].map(t => <option key={t}>{t}</option>)}
               </select>
 
-              <div className="sec">Localización</div>
-              {txtField("Dirección", "address", "C/ …")}
-              <div style={{ marginTop: 8 }}>
-                <label className="label">Municipio / zona</label>
-                <select value={form.zone || ""} onChange={e => s("zone", e.target.value)}>
-                  <option value="">—</option>
-                  {ZONES.map(z => <option key={z}>{z}</option>)}
-                </select>
-              </div>
+
 
               <div className="sec">Características</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
