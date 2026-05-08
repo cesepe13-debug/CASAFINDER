@@ -44,9 +44,14 @@ const DEFAULT_CRITERIA = [
   { id: "distanciaKm", label: "Distancia trabajo",  weight: 5,  type: "range",      min: 0,      max: 70,     unit: "km" },
   { id: "planta",      label: "Planta",             weight: 4,  type: "planta" },
   { id: "vistas",      label: "Vistas",             weight: 5,  type: "vistas" },
+  { id: "lavadero",    label: "Lavadero",           weight: 2,  type: "boolean" },
+  { id: "soleria",     label: "Solería",            weight: 2,  type: "soleria" },
 ];
 
 const ZONES = ["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"];
+
+const SOLERIA_SCORE = { "Mármol": 1, "Tarima flotante": 0.7, "Gres": 0.4 };
+const CERT_COLORS = { "A": "#1a5c3a", "B": "#2d8a4e", "C": "#e07b00", "D": "#e06000", "E": "#cc4400", "F": "#b83200", "G": "#991b1b" };
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
 function scoreColor(pts) {
@@ -81,6 +86,8 @@ function calcScore(prop, criteria) {
     } else if (c.type === "vistas") {
       const vistas = prop.vistas || [];
       s = vistas.length === 0 ? 0 : Math.max(...vistas.map(vi => VISTAS_SCORE[vi] ?? 0));
+    } else if (c.type === "soleria") {
+      s = v && SOLERIA_SCORE[v] != null ? SOLERIA_SCORE[v] : 0;
     }
 
     total += s * c.weight;
@@ -389,8 +396,8 @@ function PropertyModal({ prop, onSave, onClose }) {
     title: "", url: "", address: "", zone: "", price: 0, sizeUtil: 0, sizeConstruida: 0,
     rooms: 0, bathrooms: 0, anoConstruccion: 0,
     trastero: false, terraza: false, numTerrazas: 0, garaje: false,
-    piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false,
-    certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
+    piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false, lavadero: false,
+    soleria: "", certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
@@ -503,8 +510,18 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               <div className="sec">Superficie</div>
               {row2(<>
-                {numField("M² útiles", "sizeUtil")}
-                {numField("M² construidos", "sizeConstruida")}
+                <div>
+                  <label className="label">M² útiles</label>
+                  <input type="number" min="0" value={form.sizeUtil ?? 0}
+                    onChange={e => { const v = Number(e.target.value) || 0; setForm(f => ({ ...f, sizeUtil: v, sizeConstruida: v > 0 ? Math.round(v * 1.2) : f.sizeConstruida })); }}
+                    onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }}/>
+                </div>
+                <div>
+                  <label className="label">M² construidos</label>
+                  <input type="number" min="0" value={form.sizeConstruida ?? 0}
+                    onChange={e => { const v = Number(e.target.value) || 0; setForm(f => ({ ...f, sizeConstruida: v, sizeUtil: v > 0 ? Math.round(v * 0.8) : f.sizeUtil })); }}
+                    onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }}/>
+                </div>
               </>)}
 
               <div className="sec">Económico</div>
@@ -523,7 +540,7 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               <div className="sec">Características</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"]].map(([k,lbl]) => (
+                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🫧 Lavadero"]].map(([k,lbl]) => (
                   <Toggle key={k} val={form[k]} onChange={v => s(k, v)} label={lbl} />
                 ))}
               </div>
@@ -553,13 +570,33 @@ function PropertyModal({ prop, onSave, onClose }) {
                 ))}
               </div>
 
-              <div className="sec">Certificado energético</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                {["Sí","En trámite","No indicado"].map(v => (
-                  <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
+              <div className="sec">Solería</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {["Mármol","Tarima flotante","Gres"].map(v => (
+                  <div key={v} className={`toggle${form.soleria === v ? " on" : ""}`} onClick={() => s("soleria", form.soleria === v ? "" : v)}>
+                    <div className="toggle-dot">{form.soleria === v ? "✓" : ""}</div>{v}
+                  </div>
                 ))}
               </div>
-              {form.certEnergetico === "Sí" && row2(<>
+
+              <div className="sec">Certificado energético</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {["A","B","C","D","E","F","G"].map(v => (
+                  <div key={v} className={`toggle${form.certEnergetico === v ? " on" : ""}`}
+                    onClick={() => s("certEnergetico", form.certEnergetico === v ? "" : v)}
+                    style={form.certEnergetico === v ? { background: CERT_COLORS[v] + "22", borderColor: CERT_COLORS[v], color: CERT_COLORS[v] } : {}}>
+                    <div className="toggle-dot" style={form.certEnergetico === v ? { borderColor: CERT_COLORS[v] } : {}}>{form.certEnergetico === v ? "✓" : ""}</div>
+                    <strong>{v}</strong>
+                  </div>
+                ))}
+                <div className={`toggle${form.certEnergetico === "En trámite" ? " on" : ""}`} onClick={() => s("certEnergetico", form.certEnergetico === "En trámite" ? "" : "En trámite")}>
+                  <div className="toggle-dot">{form.certEnergetico === "En trámite" ? "✓" : ""}</div>En trámite
+                </div>
+                <div className={`toggle${form.certEnergetico === "No indicado" ? " on" : ""}`} onClick={() => s("certEnergetico", form.certEnergetico === "No indicado" ? "" : "No indicado")}>
+                  <div className="toggle-dot">{form.certEnergetico === "No indicado" ? "✓" : ""}</div>No indicado
+                </div>
+              </div>
+              {form.certEnergetico && !["En trámite","No indicado"].includes(form.certEnergetico) && row2(<>
                 {numField("Consumo energético", "consumoEnergetico", "kWh/m²")}
                 {numField("Emisiones CO₂", "emisionesEnergetico", "kg/m²")}
               </>)}
@@ -637,7 +674,7 @@ function CriteriaModal({ criteria, onChange, onClose }) {
 }
 
 // ── CompareModal ──────────────────────────────────────────────────────────────
-function CompareModal({ props, criteria, onClose }) {
+function CompareModal({ props, criteria, rankMap, onClose }) {
   const [selected, setSelected] = useState([]);
   const toggle = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : s.length < 3 ? [...s, id] : s);
   const comparing = props.filter(p => selected.includes(p.id));
@@ -668,6 +705,8 @@ function CompareModal({ props, criteria, onClose }) {
     { label: "Año construcción", get: p => p.anoConstruccion > 1900 ? p.anoConstruccion : "—", compare: "higher", num: p => p.anoConstruccion > 1900 ? p.anoConstruccion : 0 },
     { label: "Antigüedad", get: p => p.anoConstruccion > 1900 ? (CURRENT_YEAR - p.anoConstruccion) + " años" : "—", compare: "lower", num: p => p.anoConstruccion > 1900 ? CURRENT_YEAR - p.anoConstruccion : 9999 },
     { label: "Zona", get: p => p.zone || "—", compare: "none" },
+    { label: "Lavadero", get: p => p.lavadero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.lavadero },
+    { label: "Solería", get: p => p.soleria || "—", compare: "custom", num: p => SOLERIA_SCORE[p.soleria] ?? -1 },
     { label: "Inmobiliaria", get: p => p.inmobiliaria || "—", compare: "none" },
   ];
 
@@ -703,9 +742,10 @@ function CompareModal({ props, criteria, onClose }) {
             {props.map(p => (
               <div key={p.id} className={`toggle${selected.includes(p.id) ? " on" : ""}`}
                 onClick={() => toggle(p.id)}
-                style={{ opacity: !selected.includes(p.id) && selected.length >= 3 ? 0.4 : 1 }}>
+                style={{ opacity: !selected.includes(p.id) && selected.length >= 3 ? 0.4 : 1, maxWidth: 260 }}>
                 <div className="toggle-dot">{selected.includes(p.id) ? "✓" : ""}</div>
-                <span style={{ maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title || "Sin título"}</span>
+                <span style={{ fontWeight: 700, marginRight: 4, color: "var(--inkDim)", flexShrink: 0 }}>#{rankMap[p.id]}</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title || "Sin título"}</span>
               </div>
             ))}
           </div>
@@ -835,7 +875,14 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             <Cell label="IBI" val={prop.ibi > 0 ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null} />
             <Cell label="Año construcción" val={prop.anoConstruccion > 1900 ? prop.anoConstruccion : null} />
             <Cell label="Antigüedad" val={antiguedad != null ? antiguedad + " años" : null} />
-            <Cell label="Cert. energético" val={prop.certEnergetico} />
+            {prop.certEnergetico ? (
+              <div className="dcell">
+                <div className="dcell-l">Cert. energético</div>
+                <div className="dcell-v" style={{ color: CERT_COLORS[prop.certEnergetico] || "var(--ink)", fontWeight: 600 }}>
+                  {prop.certEnergetico}
+                </div>
+              </div>
+            ) : null}
             <Cell label="Consumo" val={prop.consumoEnergetico > 0 ? prop.consumoEnergetico + " kWh/m²" : null} />
             <Cell label="Emisiones" val={prop.emisionesEnergetico > 0 ? prop.emisionesEnergetico + " kg CO₂/m²" : null} />
             <Cell label="Inmobiliaria" val={prop.inmobiliaria} />
@@ -843,7 +890,8 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
 
           {/* Tags */}
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
-            {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
+            {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🫧 Lavadero"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
+            {prop.soleria && <span className="tag tag-amber">◻ {prop.soleria}</span>}
             {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
             {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
           </div>
@@ -1036,7 +1084,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                   {p.tipoInmueble && <span className="tag tag-blue">{p.tipoInmueble}</span>}
                   {p.planta && <span className="tag">{p.planta}</span>}
-                  {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"],["ascensor","🛗"]].map(([k,e]) => p[k] ? <span key={k} className="tag tag-green">{e}</span> : null)}
+                  {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"],["ascensor","🛗"],["lavadero","🫧"]].map(([k,e]) => p[k] ? <span key={k} className="tag tag-green">{e}</span> : null)}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
@@ -1067,7 +1115,7 @@ export default function App() {
 
       {showAdd && <PropertyModal prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
       {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
-      {showCompare && <CompareModal props={props} criteria={criteria} onClose={() => setShowCompare(false)} />}
+      {showCompare && <CompareModal props={props} criteria={criteria} rankMap={rankMap} onClose={() => setShowCompare(false)} />}
       {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} onToggleLaure={toggleLaure} />}
     </>
   );
