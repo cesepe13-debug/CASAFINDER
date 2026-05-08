@@ -581,25 +581,38 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               <div className="sec">Certificado energético</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                {["A","B","C","D","E","F","G"].map(v => (
-                  <div key={v} className={`toggle${form.certEnergetico === v ? " on" : ""}`}
-                    onClick={() => s("certEnergetico", form.certEnergetico === v ? "" : v)}
-                    style={form.certEnergetico === v ? { background: CERT_COLORS[v] + "22", borderColor: CERT_COLORS[v], color: CERT_COLORS[v] } : {}}>
-                    <div className="toggle-dot" style={form.certEnergetico === v ? { borderColor: CERT_COLORS[v] } : {}}>{form.certEnergetico === v ? "✓" : ""}</div>
-                    <strong>{v}</strong>
-                  </div>
+                {["Sí","En trámite","No indicado"].map(v => (
+                  <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
                 ))}
-                <div className={`toggle${form.certEnergetico === "En trámite" ? " on" : ""}`} onClick={() => s("certEnergetico", form.certEnergetico === "En trámite" ? "" : "En trámite")}>
-                  <div className="toggle-dot">{form.certEnergetico === "En trámite" ? "✓" : ""}</div>En trámite
-                </div>
-                <div className={`toggle${form.certEnergetico === "No indicado" ? " on" : ""}`} onClick={() => s("certEnergetico", form.certEnergetico === "No indicado" ? "" : "No indicado")}>
-                  <div className="toggle-dot">{form.certEnergetico === "No indicado" ? "✓" : ""}</div>No indicado
-                </div>
               </div>
-              {form.certEnergetico && !["En trámite","No indicado"].includes(form.certEnergetico) && row2(<>
-                {numField("Consumo energético", "consumoEnergetico", "kWh/m²")}
-                {numField("Emisiones CO₂", "emisionesEnergetico", "kg/m²")}
-              </>)}
+              {form.certEnergetico === "Sí" && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px", background: "var(--dim)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                  {[["consumoEnergetico","Consumo energético","kWh/m²"],["emisionesEnergetico","Emisiones CO₂","kg CO₂/m²"]].map(([key, lbl, unit]) => (
+                    <div key={key}>
+                      <label className="label">{lbl} <span style={{ color: "var(--inkFaint)", fontWeight: 400 }}>({unit})</span></label>
+                      <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 6 }}>
+                        {["A","B","C","D","E","F","G"].map(letra => {
+                          const col = CERT_COLORS[letra];
+                          const sel = form[key] === letra;
+                          return (
+                            <div key={letra} onClick={() => s(key, sel ? "" : letra)}
+                              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 11px", borderRadius: 6, border: `1.5px solid ${sel ? col : "var(--border)"}`, cursor: "pointer", background: sel ? col + "22" : "var(--surface)", color: sel ? col : "var(--inkMid)", fontWeight: sel ? 700 : 400, fontSize: 13, transition: "all 0.15s", userSelect: "none" }}>
+                              <div style={{ width: 12, height: 12, borderRadius: "50%", border: `1.5px solid ${sel ? col : "var(--borderMid)"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, color: col }}>
+                                {sel ? "✓" : ""}
+                              </div>
+                              <strong style={{ color: col }}>{letra}</strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <input type="number" min="0" value={typeof form[key] === "number" ? form[key] : 0}
+                        onChange={e => n(key, e.target.value)}
+                        onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }}
+                        placeholder="Valor numérico"/>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div className="sec">Comercialización</div>
               {txtField("Inmobiliaria", "inmobiliaria", "Nombre de la agencia…")}
@@ -878,13 +891,29 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             {prop.certEnergetico ? (
               <div className="dcell">
                 <div className="dcell-l">Cert. energético</div>
-                <div className="dcell-v" style={{ color: CERT_COLORS[prop.certEnergetico] || "var(--ink)", fontWeight: 600 }}>
-                  {prop.certEnergetico}
+                <div className="dcell-v">{prop.certEnergetico}</div>
+              </div>
+            ) : null}
+            {prop.consumoEnergetico ? (
+              <div className="dcell">
+                <div className="dcell-l">Consumo energético</div>
+                <div className="dcell-v" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {typeof prop.consumoEnergetico === "string" && CERT_COLORS[prop.consumoEnergetico] ? (
+                    <span style={{ fontWeight: 700, color: CERT_COLORS[prop.consumoEnergetico], fontSize: 15 }}>{prop.consumoEnergetico}</span>
+                  ) : prop.consumoEnergetico + " kWh/m²"}
                 </div>
               </div>
             ) : null}
-            <Cell label="Consumo" val={prop.consumoEnergetico > 0 ? prop.consumoEnergetico + " kWh/m²" : null} />
-            <Cell label="Emisiones" val={prop.emisionesEnergetico > 0 ? prop.emisionesEnergetico + " kg CO₂/m²" : null} />
+            {prop.emisionesEnergetico ? (
+              <div className="dcell">
+                <div className="dcell-l">Emisiones CO₂</div>
+                <div className="dcell-v" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {typeof prop.emisionesEnergetico === "string" && CERT_COLORS[prop.emisionesEnergetico] ? (
+                    <span style={{ fontWeight: 700, color: CERT_COLORS[prop.emisionesEnergetico], fontSize: 15 }}>{prop.emisionesEnergetico}</span>
+                  ) : prop.emisionesEnergetico + " kg CO₂/m²"}
+                </div>
+              </div>
+            ) : null}
             <Cell label="Inmobiliaria" val={prop.inmobiliaria} />
           </div>
 
@@ -969,8 +998,8 @@ export default function App() {
       distanciaKm: Number(form.distanciaKm) || 0, comunidad: Number(form.comunidad) || 0,
       ibi: Number(form.ibi) || 0, numTerrazas: Number(form.numTerrazas) || 0,
       anoConstruccion: Number(form.anoConstruccion) || 0,
-      consumoEnergetico: Number(form.consumoEnergetico) || 0,
-      emisionesEnergetico: Number(form.emisionesEnergetico) || 0,
+      consumoEnergetico: form.consumoEnergetico || "",
+      emisionesEnergetico: form.emisionesEnergetico || "",
       photos: form.photos || [],
     };
     delete p.id;
