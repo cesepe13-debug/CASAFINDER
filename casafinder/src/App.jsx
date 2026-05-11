@@ -222,6 +222,15 @@ const css = `
   .compare-cell.best{background:var(--greenBg);color:var(--green);font-weight:600}
   .compare-label{width:130px;flex-shrink:0;font-size:11px;color:var(--inkFaint);text-transform:uppercase;letter-spacing:0.05em;padding:8px 10px;border-right:1px solid var(--border);display:flex;align-items:center;background:var(--dim)}
   @media print{.no-print{display:none!important}}
+  .sold-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.15);z-index:3;pointer-events:none;border-radius:10px}
+  .sold-x{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;pointer-events:none}
+  .sold-x::before,.sold-x::after{content:'';position:absolute;width:85%;height:5px;background:rgba(180,0,0,0.65);border-radius:3px}
+  .sold-x::before{transform:rotate(30deg)}
+  .sold-x::after{transform:rotate(-30deg)}
+  .sold-btn{font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;border:1.5px solid;cursor:pointer;transition:all 0.15s;line-height:1}
+  .sold-btn.unsold{background:transparent;color:var(--inkFaint);border-color:var(--border)}
+  .sold-btn.unsold:hover{color:var(--red);border-color:var(--red)}
+  .sold-btn.issold{background:#fef2f2;color:var(--red);border-color:#fccfcf}
 `;
 
 // ── ScoreRing ─────────────────────────────────────────────────────────────────
@@ -860,7 +869,10 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
                 {prop.planta && <span className="tag">{prop.planta}</span>}
                 {prop.zone && <span className="tag">{prop.zone}</span>}
               </div>
-              <h2 style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 3 }}>{prop.title}</h2>
+              <h2 style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 3 }}>
+                {prop.sold && <span style={{ display: "inline-block", background: "#fef2f2", color: "var(--red)", border: "1.5px solid #fccfcf", borderRadius: 4, fontSize: 11, fontWeight: 700, padding: "1px 7px", letterSpacing: "0.08em", marginRight: 8, verticalAlign: "middle" }}>SOLD</span>}
+                {prop.title}
+              </h2>
               {prop.address && <div style={{ fontSize: 12, color: "var(--inkDim)" }}>{prop.address}</div>}
             </div>
             <ScoreRing pts={pts} size={58} rank={rank} />
@@ -1022,6 +1034,12 @@ export default function App() {
 
   const deleteProperty = async (id) => { await deleteDoc(doc(db, "properties", id)); };
   const saveCriteria = async (nc) => { await setDoc(doc(db, "config", "criteria"), { list: nc }); setCriteria(nc); };
+  const toggleSold = async (id) => {
+    const prop = props.find(p => p.id === id); if (!prop) return;
+    const updated = { ...prop, sold: !prop.sold }; delete updated.id;
+    await setDoc(doc(db, "properties", id), updated);
+  };
+
   const toggleLaure = async (id) => {
     const prop = props.find(p => p.id === id); if (!prop) return;
     const updated = { ...prop, enviadaLaure: !prop.enviadaLaure }; delete updated.id;
@@ -1100,8 +1118,9 @@ export default function App() {
           const m2 = p.sizeUtil || p.sizeConstruida || 0;
           const ratio = m2 && p.price ? Math.round(p.price / m2).toLocaleString("es-ES") + " €/m²" : "";
           return (
-            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s` }} onClick={() => setDetail(p)}>
+            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold ? 0.7 : 1 }} onClick={() => setDetail(p)}>
               <div className="rank-num">#{rank}</div>
+              {p.sold && <div className="sold-overlay"><div className="sold-x"/></div>}
               {photos.length > 0 && (
                 <div onClick={e => e.stopPropagation()}>
                   <Carousel photos={photos} height={110} radius="10px 10px 0 0" />
@@ -1141,8 +1160,14 @@ export default function App() {
                     onClick={e => { e.stopPropagation(); toggleLaure(p.id); }}>
                     {p.enviadaLaure ? "✉ Enviada a Laure" : "✉ Pendiente Laure"}
                   </span>
-                  <button className="print-ico btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); printPDF(p, p.pts, rank); }}
-                    style={{ padding: "3px 8px", fontSize: 12 }}>🖨</button>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button className={`sold-btn ${p.sold ? "issold" : "unsold"}`}
+                      onClick={e => { e.stopPropagation(); toggleSold(p.id); }}>
+                      {p.sold ? "✕ SOLD" : "SOLD"}
+                    </button>
+                    <button className="print-ico btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); printPDF(p, p.pts, rank); }}
+                      style={{ padding: "3px 8px", fontSize: 12 }}>🖨</button>
+                  </div>
                 </div>
                 <div style={{ display: "flex", gap: 2, height: 3, marginTop: 9 }}>
                   {p.bd.filter(b => b.weight > 0).map(b => (
