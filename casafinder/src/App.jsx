@@ -109,6 +109,13 @@ function fileToBase64(file) {
 
 const fmtPrice = (n) => n ? Number(n).toLocaleString("es-ES") + " €" : "—";
 
+function comunidadColor(n) {
+  if (!n || n === 0) return "#991b1b"; // red for missing
+  if (n <= 130) return "#1a5c3a";      // green 90-130
+  if (n <= 160) return "#e07b00";      // orange 131-160
+  return "#991b1b";                    // red 161+
+}
+
 async function extractFromText(text, url) {
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -863,19 +870,25 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
         <div style={{ padding: "16px 22px 20px" }}>
           {/* Price */}
           <div style={{ background: "var(--dim)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>
                   {prop.price ? Number(prop.price).toLocaleString("es-ES") + " €" : "—"}
                 </div>
                 <div style={{ fontSize: 13, color: "var(--inkMid)", marginTop: 4, fontWeight: 500 }}>{ratio}</div>
               </div>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                {prop.sizeUtil > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeUtil}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² útiles</div></div>}
-                {prop.sizeConstruida > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeConstruida}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² const.</div></div>}
-                {prop.rooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.rooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>hab.</div></div>}
-                {prop.bathrooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.bathrooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>baños</div></div>}
+              <div style={{ textAlign: "center" }}>
+                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
+                  {prop.comunidad > 0 ? prop.comunidad + " €" : "?"}
+                </div>
+                <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>comunidad/mes</div>
               </div>
+            </div>
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              {prop.sizeUtil > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeUtil}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² útiles</div></div>}
+              {prop.sizeConstruida > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.sizeConstruida}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>m² const.</div></div>}
+              {prop.rooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.rooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>hab.</div></div>}
+              {prop.bathrooms > 0 && <div style={{ textAlign: "center" }}><div style={{ fontSize: 17, fontWeight: 600 }}>{prop.bathrooms}</div><div style={{ fontSize: 10, color: "var(--inkDim)", textTransform: "uppercase", letterSpacing: "0.05em" }}>baños</div></div>}
             </div>
           </div>
 
@@ -884,7 +897,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
           <div className="dgrid" style={{ marginBottom: 14 }}>
             <Cell label="Orientación" val={prop.orientacion} />
             <Cell label="Dist. trabajo" val={prop.distanciaKm > 0 ? prop.distanciaKm + " km" : null} />
-            <Cell label="Comunidad" val={prop.comunidad > 0 ? Number(prop.comunidad).toLocaleString("es-ES") + " €/mes" : null} />
+
             <Cell label="IBI" val={prop.ibi > 0 ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null} />
             <Cell label="Año construcción" val={prop.anoConstruccion > 1900 ? prop.anoConstruccion : null} />
             <Cell label="Antigüedad" val={antiguedad != null ? antiguedad + " años" : null} />
@@ -1103,8 +1116,16 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>
-                    {p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                      {p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", color: comunidadColor(p.comunidad), lineHeight: 1 }}>
+                        {p.comunidad > 0 ? p.comunidad + " €" : "?"}
+                      </div>
+                      <div style={{ fontSize: 9, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 1 }}>comunidad</div>
+                    </div>
                   </div>
                   <div style={{ fontSize: 11, color: "var(--inkMid)", marginTop: 3 }}>
                     {ratio}{ratio && m2 ? " · " : ""}{m2 ? m2 + " m²" : ""}{m2 && p.rooms ? " · " : ""}{p.rooms ? p.rooms + " hab." : ""}
