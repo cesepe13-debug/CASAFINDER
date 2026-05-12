@@ -46,6 +46,7 @@ const DEFAULT_CRITERIA = [
   { id: "vistas",      label: "Vistas",             weight: 5,  type: "vistas" },
   { id: "lavadero",    label: "Lavadero",           weight: 2,  type: "boolean" },
   { id: "soleria",     label: "Solería",            weight: 2,  type: "soleria" },
+  { id: "precioM2",    label: "Precio / m²",        weight: 4,  type: "range",   min: 2400, max: 4000, unit: "€/m²" },
 ];
 
 const ZONES = ["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"];
@@ -61,9 +62,12 @@ function scoreColor(pts) {
 function calcScore(prop, criteria) {
   let total = 0, max = 0;
   const bd = [];
+  // Virtual field: precioM2
+  const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
+  const propWithVirtual = { ...prop, precioM2: m2 && prop.price ? Math.round(prop.price / m2) : null };
   criteria.forEach(c => {
     if (!c.weight) return;
-    const v = prop[c.id];
+    const v = propWithVirtual[c.id];
     let s = 0;
 
     if (c.type === "boolean") {
@@ -732,7 +736,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
     { label: "Precio", get: p => p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => p.price, criterionId: "price" },
     { label: "M² útiles", get: p => p.sizeUtil ? p.sizeUtil + " m²" : "—", compare: "higher", num: p => p.sizeUtil, criterionId: "sizeUtil" },
     { label: "M² construidos", get: p => p.sizeConstruida ? p.sizeConstruida + " m²" : "—", compare: "higher", num: p => p.sizeConstruida },
-    { label: "€/m²", get: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)) : null },
+    { label: "€/m²", get: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)) : null, criterionId: "precioM2" },
     { label: "Habitaciones", get: p => p.rooms || "—", compare: "higher", num: p => p.rooms },
     { label: "Baños", get: p => p.bathrooms || "—", compare: "higher", num: p => p.bathrooms },
     { label: "Planta", get: p => p.planta || "—", compare: "custom", num: p => PLANTA_ORDER[p.planta] ?? -1, criterionId: "planta" },
