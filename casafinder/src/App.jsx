@@ -709,33 +709,51 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
   const comparing = props.filter(p => selected.includes(p.id));
   const scores = comparing.map(p => calcScore(p, criteria));
 
+  // Per-criterion score for each prop
+  const criterionScore = (prop, criterionId) => {
+    const c = criteria.find(c => c.id === criterionId);
+    if (!c || !c.weight) return 0;
+    const v = prop[criterionId];
+    let s = 0;
+    if (c.type === "boolean") s = v ? 1 : 0;
+    else if (c.type === "range") {
+      if (v == null) s = 0;
+      else if (c.min < c.max) s = v <= c.min ? 1 : v >= c.max ? 0 : 1 - (v - c.min) / (c.max - c.min);
+      else s = v >= c.min ? 1 : v <= c.max ? 0 : (v - c.max) / (c.min - c.max);
+    } else if (c.type === "orientacion") s = v && ORIENTACION_SCORE[v] != null ? ORIENTACION_SCORE[v] : 0;
+    else if (c.type === "planta") { const r = PLANTA_ORDER[v]; s = r != null ? r / 6 : 0; }
+    else if (c.type === "vistas") { const vs = prop.vistas || []; s = vs.length === 0 ? 0 : Math.max(...vs.map(vi => VISTAS_SCORE[vi] ?? 0)); }
+    else if (c.type === "soleria") s = v && SOLERIA_SCORE[v] != null ? SOLERIA_SCORE[v] : 0;
+    return Math.round(s * c.weight * 10) / 10; // weighted score
+  };
+
   const rows = [
-    { label: "Puntuación", get: (p, i) => scores[i].pts + " / 100", compare: "higher" },
-    { label: "Precio", get: p => p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => p.price },
-    { label: "M² útiles", get: p => p.sizeUtil ? p.sizeUtil + " m²" : "—", compare: "higher", num: p => p.sizeUtil },
+    { label: "Puntuación total", get: (p, i) => scores[i].pts + " / 100", compare: "higher" },
+    { label: "Precio", get: p => p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => p.price, criterionId: "price" },
+    { label: "M² útiles", get: p => p.sizeUtil ? p.sizeUtil + " m²" : "—", compare: "higher", num: p => p.sizeUtil, criterionId: "sizeUtil" },
     { label: "M² construidos", get: p => p.sizeConstruida ? p.sizeConstruida + " m²" : "—", compare: "higher", num: p => p.sizeConstruida },
     { label: "€/m²", get: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)).toLocaleString("es-ES") + " €" : "—", compare: "lower", num: p => (p.sizeUtil || p.sizeConstruida) && p.price ? Math.round(p.price / (p.sizeUtil || p.sizeConstruida)) : null },
     { label: "Habitaciones", get: p => p.rooms || "—", compare: "higher", num: p => p.rooms },
     { label: "Baños", get: p => p.bathrooms || "—", compare: "higher", num: p => p.bathrooms },
-    { label: "Planta", get: p => p.planta || "—", compare: "custom", num: p => PLANTA_ORDER[p.planta] ?? -1 },
-    { label: "Orientación", get: p => p.orientacion || "—", compare: "custom", num: p => ORIENTACION_SCORE[p.orientacion] ?? -1 },
-    { label: "Comunidad", get: p => p.comunidad ? Number(p.comunidad).toLocaleString("es-ES") + " €/mes" : "—", compare: "lower", num: p => p.comunidad || 9999 },
-    { label: "IBI", get: p => p.ibi ? Number(p.ibi).toLocaleString("es-ES") + " €/año" : "—", compare: "lower", num: p => p.ibi || 9999 },
-    { label: "Dist. trabajo", get: p => p.distanciaKm ? p.distanciaKm + " km" : "—", compare: "lower", num: p => p.distanciaKm || 9999 },
-    { label: "Trastero", get: p => p.trastero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.trastero },
-    { label: "Garaje", get: p => p.garaje ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.garaje },
-    { label: "Terraza", get: p => p.terraza ? `✓ Sí${p.numTerrazas > 1 ? " ×"+p.numTerrazas : ""}` : "✗ No", compare: "boolean", bool: p => p.terraza },
-    { label: "Piscina", get: p => p.piscina ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.piscina },
-    { label: "Ascensor", get: p => p.ascensor ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.ascensor },
-    { label: "A/C", get: p => p.aireCond ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.aireCond },
-    { label: "Jardín", get: p => p.jardin ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.jardin },
-    { label: "Vistas", get: p => (p.vistas || []).join(", ") || "—", compare: "none" },
+    { label: "Planta", get: p => p.planta || "—", compare: "custom", num: p => PLANTA_ORDER[p.planta] ?? -1, criterionId: "planta" },
+    { label: "Orientación", get: p => p.orientacion || "—", compare: "custom", num: p => ORIENTACION_SCORE[p.orientacion] ?? -1, criterionId: "orientacion" },
+    { label: "Comunidad", get: p => p.comunidad ? Number(p.comunidad).toLocaleString("es-ES") + " €/mes" : "—", compare: "lower", num: p => p.comunidad || 9999, criterionId: "comunidad" },
+    { label: "IBI", get: p => p.ibi ? Number(p.ibi).toLocaleString("es-ES") + " €/año" : "—", compare: "lower", num: p => p.ibi || 9999, criterionId: "ibi" },
+    { label: "Dist. trabajo", get: p => p.distanciaKm ? p.distanciaKm + " km" : "—", compare: "lower", num: p => p.distanciaKm || 9999, criterionId: "distanciaKm" },
+    { label: "Trastero", get: p => p.trastero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.trastero, criterionId: "trastero" },
+    { label: "Garaje", get: p => p.garaje ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.garaje, criterionId: "garaje" },
+    { label: "Terraza", get: p => p.terraza ? `✓ Sí${p.numTerrazas > 1 ? " ×"+p.numTerrazas : ""}` : "✗ No", compare: "boolean", bool: p => p.terraza, criterionId: "terraza" },
+    { label: "Piscina", get: p => p.piscina ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.piscina, criterionId: "piscina" },
+    { label: "Ascensor", get: p => p.ascensor ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.ascensor, criterionId: "ascensor" },
+    { label: "A/C", get: p => p.aireCond ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.aireCond, criterionId: "aireCond" },
+    { label: "Jardín", get: p => p.jardin ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.jardin, criterionId: "jardin" },
+    { label: "Lavadero", get: p => p.lavadero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.lavadero, criterionId: "lavadero" },
+    { label: "Vistas", get: p => (p.vistas || []).join(", ") || "—", compare: "none", criterionId: "vistas" },
+    { label: "Solería", get: p => p.soleria || "—", compare: "custom", num: p => SOLERIA_SCORE[p.soleria] ?? -1, criterionId: "soleria" },
     { label: "Cert. energético", get: p => p.certEnergetico || "—", compare: "none" },
     { label: "Año construcción", get: p => p.anoConstruccion > 1900 ? p.anoConstruccion : "—", compare: "higher", num: p => p.anoConstruccion > 1900 ? p.anoConstruccion : 0 },
     { label: "Antigüedad", get: p => p.anoConstruccion > 1900 ? (CURRENT_YEAR - p.anoConstruccion) + " años" : "—", compare: "lower", num: p => p.anoConstruccion > 1900 ? CURRENT_YEAR - p.anoConstruccion : 9999 },
     { label: "Zona", get: p => p.zone || "—", compare: "none" },
-    { label: "Lavadero", get: p => p.lavadero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.lavadero },
-    { label: "Solería", get: p => p.soleria || "—", compare: "custom", num: p => SOLERIA_SCORE[p.soleria] ?? -1 },
     { label: "Inmobiliaria", get: p => p.inmobiliaria || "—", compare: "none" },
   ];
 
@@ -768,13 +786,14 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
         <div style={{ padding: "16px 22px 22px" }}>
           <p style={{ fontSize: 12, color: "var(--inkDim)", marginBottom: 12 }}>Selecciona hasta 3 propiedades para comparar. Las celdas verdes indican el mejor valor en cada categoría.</p>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
-            {props.map(p => (
+            {[...props].sort((a,b) => (rankMap[a.id]||99) - (rankMap[b.id]||99)).map(p => (
               <div key={p.id} className={`toggle${selected.includes(p.id) ? " on" : ""}`}
                 onClick={() => toggle(p.id)}
-                style={{ opacity: !selected.includes(p.id) && selected.length >= 3 ? 0.4 : 1, maxWidth: 260 }}>
+                style={{ opacity: !selected.includes(p.id) && selected.length >= 3 ? 0.4 : 1, maxWidth: 280 }}>
                 <div className="toggle-dot">{selected.includes(p.id) ? "✓" : ""}</div>
                 <span style={{ fontWeight: 700, marginRight: 4, color: "var(--inkDim)", flexShrink: 0 }}>#{rankMap[p.id]}</span>
                 <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.title || "Sin título"}</span>
+                <span style={{ marginLeft: 4, fontSize: 11, color: scoreColor(calcScore(p, criteria).pts), fontWeight: 600, flexShrink: 0 }}>{calcScore(p, criteria).pts}pts</span>
               </div>
             ))}
           </div>
@@ -797,10 +816,10 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr>
-                      <th style={{ width: 130, padding: "8px 10px", textAlign: "left", fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--dim)", borderBottom: "1px solid var(--border)" }}></th>
+                      <th style={{ width: 130, padding: "8px 10px", textAlign: "left", fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--dim)", borderBottom: "1px solid var(--border)" }}>Criterio</th>
                       {comparing.map((p, i) => (
                         <th key={p.id} style={{ padding: "8px 10px", textAlign: "left", background: p === winner ? "#111" : "var(--dim)", color: p === winner ? "white" : "var(--ink)", borderBottom: "1px solid var(--border)", fontWeight: 600, fontSize: 12 }}>
-                          {p === winner && "🏆 "}{p.title || "Sin título"}
+                          {p === winner && "🏆 "}#{rankMap[p.id]} · {p.title || "Sin título"}
                         </th>
                       ))}
                     </tr>
@@ -811,14 +830,29 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                         <td style={{ padding: "7px 10px", fontSize: 11, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.04em", background: "var(--dim)", fontWeight: 500 }}>{row.label}</td>
                         {comparing.map((p, pi) => {
                           const best = isBest(row, pi);
+                          const cScore = row.criterionId ? criterionScore(p, row.criterionId) : null;
                           return (
                             <td key={p.id} style={{ padding: "7px 10px", background: best ? "var(--greenBg)" : "white", color: best ? "var(--green)" : "var(--ink)", fontWeight: best ? 600 : 400 }}>
-                              {row.get(p, pi)}
+                              <div>{row.get(p, pi)}</div>
+                              {cScore !== null && <div style={{ fontSize: 10, color: best ? "var(--green)" : "var(--inkFaint)", marginTop: 1 }}>({cScore} pts)</div>}
                             </td>
                           );
                         })}
                       </tr>
                     ))}
+                    {/* Totals row */}
+                    <tr style={{ borderTop: "2px solid var(--border)", background: "var(--dim)" }}>
+                      <td style={{ padding: "9px 10px", fontSize: 11, fontWeight: 700, color: "var(--inkMid)", textTransform: "uppercase", letterSpacing: "0.04em" }}>TOTAL</td>
+                      {comparing.map((p, pi) => {
+                        const total = scores[pi].pts;
+                        const isWinner = p === winner;
+                        return (
+                          <td key={p.id} style={{ padding: "9px 10px", fontWeight: 700, fontSize: 15, fontFamily: "Space Grotesk,sans-serif", color: isWinner ? "var(--green)" : scoreColor(total) }}>
+                            {total} / 100 {isWinner ? "🏆" : ""}
+                          </td>
+                        );
+                      })}
+                    </tr>
                   </tbody>
                 </table>
               </div>
