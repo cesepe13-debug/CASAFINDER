@@ -1228,8 +1228,13 @@ export default function App() {
     };
     delete p.id;
     delete p.error;
-    await setDoc(doc(db, "properties", id), p);
-    setShowAdd(false); setEditing(null);
+    try {
+      await setDoc(doc(db, "properties", id), p);
+      setShowAdd(false); setEditing(null);
+    } catch(err) {
+      alert("Error al guardar: " + err.message);
+      console.error("Firebase save error:", err, p);
+    }
   };
 
   const deleteProperty = async (id) => { await deleteDoc(doc(db, "properties", id)); };
