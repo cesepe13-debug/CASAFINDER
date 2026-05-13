@@ -473,7 +473,9 @@ function PropertyModal({ prop, onSave, onClose }) {
     distanciaKm: 0, comunidad: 0, ibi: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
   };
-  const [form, setForm] = useState(prop ? { ...blank, ...prop, photos: prop.photos || [] } : blank);
+  const cleanVal = (v) => v === undefined ? null : v;
+  const cleanProp = prop ? Object.fromEntries(Object.entries({ ...blank, ...prop, photos: prop.photos || [] }).map(([k,v]) => [k, v === undefined ? blank[k] : v])) : blank;
+  const [form, setForm] = useState(prop ? cleanProp : blank);
   const [urlInput, setUrlInput] = useState(prop?.url || "");
   const [pastedText, setPastedText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1170,8 +1172,19 @@ export default function App() {
   const [filter, setFilter] = useState("");
 
   useEffect(() => {
+    const cleanUndefined = (obj) => {
+      const out = {};
+      Object.entries(obj).forEach(([k, v]) => {
+        if (v === undefined) return;
+        if (Array.isArray(v)) out[k] = v.filter(x => x !== undefined);
+        else if (v !== null && typeof v === "object") out[k] = cleanUndefined(v);
+        else out[k] = v;
+      });
+      return out;
+    };
+
     const u1 = onSnapshot(collection(db, "properties"), snap => {
-      setProps(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+      setProps(snap.docs.map(d => cleanUndefined({ id: d.id, ...d.data() })));
       setLoaded(true);
     });
     const u2 = onSnapshot(doc(db, "config", "criteria"), snap => {
