@@ -1228,12 +1228,24 @@ export default function App() {
     };
     delete p.id;
     delete p.error;
+    // Remove ALL undefined values recursively — Firebase rejects them
+    const clean = (obj) => {
+      const out = {};
+      Object.entries(obj).forEach(([k, v]) => {
+        if (v === undefined) return;
+        if (Array.isArray(v)) out[k] = v.filter(x => x !== undefined);
+        else if (v !== null && typeof v === "object") out[k] = clean(v);
+        else out[k] = v;
+      });
+      return out;
+    };
+    const cleanP = clean(p);
     try {
-      await setDoc(doc(db, "properties", id), p);
+      await setDoc(doc(db, "properties", id), cleanP);
       setShowAdd(false); setEditing(null);
     } catch(err) {
       alert("Error al guardar: " + err.message);
-      console.error("Firebase save error:", err, p);
+      console.error("Firebase save error:", err, cleanP);
     }
   };
 
