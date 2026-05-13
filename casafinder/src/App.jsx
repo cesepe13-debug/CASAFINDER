@@ -541,58 +541,6 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               {txtField("Título", "title", "Ático en San Pedro de Alcántara…")}
 
-              <div className="sec">Estado de la cocina</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                {COCINA_CATS.map(c => (
-                  <div key={c.val} className={`toggle${form.estadoCocina === c.val ? " on" : ""}`}
-                    onClick={() => s("estadoCocina", form.estadoCocina === c.val ? "" : c.val)} title={c.desc}>
-                    <div className="toggle-dot">{form.estadoCocina === c.val ? "✓" : ""}</div>
-                    {c.icon} {c.label}
-                  </div>
-                ))}
-              </div>
-              {form.estadoCocina && <div style={{ fontSize: 11, color: "var(--inkDim)", marginBottom: 8, fontStyle: "italic" }}>{COCINA_CATS.find(c => c.val === form.estadoCocina)?.desc}</div>}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                <div>
-                  <label className="label" style={{ color: "var(--green)" }}>✅ Aspectos positivos</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {COCINA_POSITIVOS.map(p => {
-                      const sel = (form.cocinaPositivos || []).includes(p.val);
-                      return <div key={p.val} className={`toggle${sel ? " on" : ""}`}
-                        onClick={() => { const a = form.cocinaPositivos||[]; s("cocinaPositivos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
-                        style={{ fontSize: 11 }}>
-                        <div className="toggle-dot">{sel ? "✓" : ""}</div>{p.label}
-                      </div>;
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <label className="label" style={{ color: "var(--red)" }}>🔴 Aspectos negativos</label>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {COCINA_NEGATIVOS.map(p => {
-                      const sel = (form.cocinaNegativos || []).includes(p.val);
-                      return <div key={p.val} onClick={() => { const a = form.cocinaNegativos||[]; s("cocinaNegativos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
-                        style={{ display:"inline-flex",alignItems:"center",gap:6,padding:"6px 11px",borderRadius:6,border:`1px solid ${sel?"#fccfcf":"var(--border)"}`,cursor:"pointer",fontSize:11,userSelect:"none",background:sel?"#fef2f2":"var(--surface)",color:sel?"var(--red)":"var(--inkMid)",marginBottom:0,transition:"all 0.15s" }}>
-                        <div style={{ width:13,height:13,borderRadius:"50%",border:`1.5px solid ${sel?"var(--red)":"currentColor"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,flexShrink:0 }}>{sel?"✓":""}</div>
-                        {p.label}
-                      </div>;
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              <div className="sec">Tipo de aire acondicionado</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {AIRE_CATS.map(c => (
-                  <div key={c.val} className={`toggle${form.tipoAire === c.val ? " on" : ""}`}
-                    onClick={() => s("tipoAire", form.tipoAire === c.val ? "" : c.val)} title={c.desc}>
-                    <div className="toggle-dot">{form.tipoAire === c.val ? "✓" : ""}</div>
-                    {c.icon} {c.label}
-                  </div>
-                ))}
-              </div>
-              {form.tipoAire && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, fontStyle: "italic" }}>{AIRE_CATS.find(c => c.val === form.tipoAire)?.desc}</div>}
-
               <div className="sec">Localización</div>
               <div>
                 <label className="label">Municipio / zona</label>
@@ -631,17 +579,6 @@ function PropertyModal({ prop, onSave, onClose }) {
                 {numField("Baños", "bathrooms")}
               </>)}
 
-              <div className="sec">Estado de los baños</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {BANOS_CATS.map(c => (
-                  <div key={c.val} className={`toggle${form.estadoBanos === c.val ? " on" : ""}`}
-                    onClick={() => s("estadoBanos", form.estadoBanos === c.val ? "" : c.val)} title={c.desc}>
-                    <div className="toggle-dot">{form.estadoBanos === c.val ? "✓" : ""}</div>
-                    {c.icon} {c.label}
-                  </div>
-                ))}
-              </div>
-              {form.estadoBanos && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, fontStyle: "italic" }}>{BANOS_CATS.find(c => c.val === form.estadoBanos)?.desc}</div>}
 
               <div className="sec">Superficie</div>
               {row2(<>
@@ -688,6 +625,74 @@ function PropertyModal({ prop, onSave, onClose }) {
                   </div>
                 )}
               </div>
+
+              <div className="sec">Estado de los baños</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {BANOS_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.estadoBanos === c.val ? " on" : ""}`}
+                    onClick={() => s("estadoBanos", form.estadoBanos === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.estadoBanos === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.estadoBanos && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, marginBottom: 4, fontStyle: "italic" }}>{BANOS_CATS.find(c => c.val === form.estadoBanos)?.desc}</div>}
+
+              <div className="sec">Estado de la cocina</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {COCINA_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.estadoCocina === c.val ? " on" : ""}`}
+                    onClick={() => s("estadoCocina", form.estadoCocina === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.estadoCocina === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.estadoCocina && <div style={{ fontSize: 11, color: "var(--inkDim)", marginBottom: 8, fontStyle: "italic" }}>{COCINA_CATS.find(c => c.val === form.estadoCocina)?.desc}</div>}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label className="label" style={{ color: "var(--green)" }}>✅ Positivos</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {COCINA_POSITIVOS.map(p => {
+                      const sel = (form.cocinaPositivos || []).includes(p.val);
+                      return (
+                        <div key={p.val} className={`toggle${sel ? " on" : ""}`}
+                          onClick={() => { const a = form.cocinaPositivos||[]; s("cocinaPositivos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
+                          style={{ fontSize: 11 }}>
+                          <div className="toggle-dot">{sel ? "✓" : ""}</div>{p.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="label" style={{ color: "var(--red)" }}>🔴 Negativos</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {COCINA_NEGATIVOS.map(p => {
+                      const sel = (form.cocinaNegativos || []).includes(p.val);
+                      return (
+                        <div key={p.val} className={`toggle${sel ? " on" : ""}`}
+                          onClick={() => { const a = form.cocinaNegativos||[]; s("cocinaNegativos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
+                          style={{ fontSize: 11, ...(sel ? { background:"#fef2f2", borderColor:"#fccfcf", color:"var(--red)" } : {}) }}>
+                          <div className="toggle-dot" style={sel ? { borderColor:"var(--red)" } : {}}>{sel ? "✓" : ""}</div>{p.label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="sec">Tipo de aire acondicionado</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {AIRE_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.tipoAire === c.val ? " on" : ""}`}
+                    onClick={() => s("tipoAire", form.tipoAire === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.tipoAire === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.tipoAire && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, fontStyle: "italic" }}>{AIRE_CATS.find(c => c.val === form.tipoAire)?.desc}</div>}
 
               <div className="sec">Año de construcción</div>
               {row2(<>
