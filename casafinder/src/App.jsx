@@ -47,11 +47,58 @@ const DEFAULT_CRITERIA = [
   { id: "lavadero",    label: "Lavadero",           weight: 2,  type: "boolean" },
   { id: "soleria",     label: "Solería",            weight: 2,  type: "soleria" },
   { id: "precioM2",    label: "Precio / m²",        weight: 4,  type: "range",   min: 2400, max: 4000, unit: "€/m²" },
+  { id: "estadoBanos", label: "Estado baños",        weight: 4,  type: "mapped",  scoreMap: "BANOS_SCORE" },
+  { id: "estadoCocina",label: "Estado cocina",       weight: 4,  type: "mapped",  scoreMap: "COCINA_SCORE_MAP" },
+  { id: "tipoAire",    label: "Tipo A/C",            weight: 4,  type: "mapped",  scoreMap: "AIRE_SCORE_MAP" },
 ];
 
 const ZONES = ["Málaga capital","Torremolinos","Benalmádena","Fuengirola","Mijas","Mijas Costa","Marbella","Las Chapas","Elviria","Nueva Andalucía","Puerto Banús","San Pedro de Alcántara","Guadalmina","Cancelada","Estepona","Selwo","Manilva","Sabinillas","Casares","Ojén","Istán","Benahavís"];
 
 const SOLERIA_SCORE = { "Mármol": 1, "Tarima flotante": 0.7, "Gres": 0.4 };
+
+const BANOS_CATS = [
+  { val: "reforma_urgente",   label: "Reforma urgente",     icon: "🔴", desc: "Muy viejos, instalación deficiente",              score: 0 },
+  { val: "anticuado",         label: "Anticuado funcional", icon: "🟠", desc: "Viejos pero operativos, no son de tu gusto",      score: 0.25 },
+  { val: "clasico_elegante",  label: "Clásico elegante",    icon: "🟡", desc: "Estética de hace años pero cuidados y con clase", score: 0.55 },
+  { val: "actualizado",       label: "Actualizado",         icon: "🟢", desc: "Reformado recientemente, estética actual",        score: 0.8 },
+  { val: "lujo",              label: "De lujo",             icon: "✨", desc: "Diseño contemporáneo, materiales premium",        score: 1 },
+];
+
+const COCINA_CATS = [
+  { val: "muy_antigua",       label: "Muy antigua",         icon: "🔴", desc: "Muebles muy viejos, sin reformar",                score: 0 },
+  { val: "antigua_funcional", label: "Antigua funcional",   icon: "🟠", desc: "Antigua pero operativa, reforma a medio plazo",   score: 0.25 },
+  { val: "correcta",          label: "Correcta",            icon: "🟡", desc: "Estética pasada pero bien conservada",            score: 0.5 },
+  { val: "moderna",           label: "Moderna",             icon: "🟢", desc: "Reformada, electrodomésticos actuales",           score: 0.8 },
+  { val: "premium",           label: "Premium",             icon: "✨", desc: "Alto nivel, isla o barra, electrodomésticos top", score: 1 },
+];
+
+const COCINA_POSITIVOS = [
+  { val: "reformada",    label: "Reformada / moderna" },
+  { val: "grande",       label: "Grande y espaciosa" },
+  { val: "luz_natural",  label: "Luz natural / ventana" },
+  { val: "pasaplatos",   label: "Comunicada con salón / pasaplatos" },
+  { val: "electro_alta", label: "Electrodomésticos gama alta" },
+  { val: "isla",         label: "Con isla o barra" },
+];
+
+const COCINA_NEGATIVOS = [
+  { val: "termo",          label: "Termo eléctrico dentro" },
+  { val: "lavadora",       label: "Lavadora dentro (sin lavadero)" },
+  { val: "muebles_viejos", label: "Muebles muy viejos" },
+  { val: "pequena",        label: "Cocina pequeña" },
+  { val: "interior",       label: "Interior sin luz" },
+  { val: "electro_ant",    label: "Electrodomésticos anticuados" },
+];
+
+const AIRE_CATS = [
+  { val: "centralizado", label: "Centralizado",  icon: "❄️",  desc: "Con rejillas de impulsión y retorno", score: 1 },
+  { val: "splits",       label: "Por splits",    icon: "🌬️", desc: "Unidades individuales por estancia",  score: 0.5 },
+  { val: "sin_ac",       label: "Sin A/C",       icon: "🌡️", desc: "No tiene aire acondicionado",         score: 0 },
+];
+
+const BANOS_SCORE    = Object.fromEntries(BANOS_CATS.map(c => [c.val, c.score]));
+const COCINA_SCORE_MAP = Object.fromEntries(COCINA_CATS.map(c => [c.val, c.score]));
+const AIRE_SCORE_MAP = Object.fromEntries(AIRE_CATS.map(c => [c.val, c.score]));
 const CERT_COLORS = { "A": "#1a5c3a", "B": "#2d8a4e", "C": "#e07b00", "D": "#e06000", "E": "#cc4400", "F": "#b83200", "G": "#991b1b" };
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
@@ -92,6 +139,9 @@ function calcScore(prop, criteria) {
       s = vistas.length === 0 ? 0 : Math.max(...vistas.map(vi => VISTAS_SCORE[vi] ?? 0));
     } else if (c.type === "soleria") {
       s = v && SOLERIA_SCORE[v] != null ? SOLERIA_SCORE[v] : 0;
+    } else if (c.type === "mapped") {
+      const map = c.scoreMap === "BANOS_SCORE" ? BANOS_SCORE : c.scoreMap === "COCINA_SCORE_MAP" ? COCINA_SCORE_MAP : AIRE_SCORE_MAP;
+      s = v && map[v] != null ? map[v] : 0;
     }
 
     total += s * c.weight;
@@ -418,6 +468,7 @@ function PropertyModal({ prop, onSave, onClose }) {
     trastero: false, terraza: false, numTerrazas: 0, garaje: false,
     piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false, lavadero: false,
     soleria: "", certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
+    estadoBanos: "", estadoCocina: "", cocinaPositivos: [], cocinaNegativos: [], tipoAire: "",
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
@@ -490,6 +541,58 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               {txtField("Título", "title", "Ático en San Pedro de Alcántara…")}
 
+              <div className="sec">Estado de la cocina</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {COCINA_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.estadoCocina === c.val ? " on" : ""}`}
+                    onClick={() => s("estadoCocina", form.estadoCocina === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.estadoCocina === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.estadoCocina && <div style={{ fontSize: 11, color: "var(--inkDim)", marginBottom: 8, fontStyle: "italic" }}>{COCINA_CATS.find(c => c.val === form.estadoCocina)?.desc}</div>}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label className="label" style={{ color: "var(--green)" }}>✅ Aspectos positivos</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {COCINA_POSITIVOS.map(p => {
+                      const sel = (form.cocinaPositivos || []).includes(p.val);
+                      return <div key={p.val} className={`toggle${sel ? " on" : ""}`}
+                        onClick={() => { const a = form.cocinaPositivos||[]; s("cocinaPositivos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
+                        style={{ fontSize: 11 }}>
+                        <div className="toggle-dot">{sel ? "✓" : ""}</div>{p.label}
+                      </div>;
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="label" style={{ color: "var(--red)" }}>🔴 Aspectos negativos</label>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {COCINA_NEGATIVOS.map(p => {
+                      const sel = (form.cocinaNegativos || []).includes(p.val);
+                      return <div key={p.val} onClick={() => { const a = form.cocinaNegativos||[]; s("cocinaNegativos", sel ? a.filter(x=>x!==p.val) : [...a,p.val]); }}
+                        style={{ display:"inline-flex",alignItems:"center",gap:6,padding:"6px 11px",borderRadius:6,border:`1px solid ${sel?"#fccfcf":"var(--border)"}`,cursor:"pointer",fontSize:11,userSelect:"none",background:sel?"#fef2f2":"var(--surface)",color:sel?"var(--red)":"var(--inkMid)",marginBottom:0,transition:"all 0.15s" }}>
+                        <div style={{ width:13,height:13,borderRadius:"50%",border:`1.5px solid ${sel?"var(--red)":"currentColor"}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:8,flexShrink:0 }}>{sel?"✓":""}</div>
+                        {p.label}
+                      </div>;
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div className="sec">Tipo de aire acondicionado</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {AIRE_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.tipoAire === c.val ? " on" : ""}`}
+                    onClick={() => s("tipoAire", form.tipoAire === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.tipoAire === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.tipoAire && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, fontStyle: "italic" }}>{AIRE_CATS.find(c => c.val === form.tipoAire)?.desc}</div>}
+
               <div className="sec">Localización</div>
               <div>
                 <label className="label">Municipio / zona</label>
@@ -527,6 +630,18 @@ function PropertyModal({ prop, onSave, onClose }) {
                 {numField("Habitaciones", "rooms")}
                 {numField("Baños", "bathrooms")}
               </>)}
+
+              <div className="sec">Estado de los baños</div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {BANOS_CATS.map(c => (
+                  <div key={c.val} className={`toggle${form.estadoBanos === c.val ? " on" : ""}`}
+                    onClick={() => s("estadoBanos", form.estadoBanos === c.val ? "" : c.val)} title={c.desc}>
+                    <div className="toggle-dot">{form.estadoBanos === c.val ? "✓" : ""}</div>
+                    {c.icon} {c.label}
+                  </div>
+                ))}
+              </div>
+              {form.estadoBanos && <div style={{ fontSize: 11, color: "var(--inkDim)", marginTop: 4, fontStyle: "italic" }}>{BANOS_CATS.find(c => c.val === form.estadoBanos)?.desc}</div>}
 
               <div className="sec">Superficie</div>
               {row2(<>
@@ -752,6 +867,9 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
     { label: "A/C", get: p => p.aireCond ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.aireCond, criterionId: "aireCond" },
     { label: "Jardín", get: p => p.jardin ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.jardin, criterionId: "jardin" },
     { label: "Lavadero", get: p => p.lavadero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.lavadero, criterionId: "lavadero" },
+    { label: "Estado baños", get: p => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?c.icon+" "+c.label:"—"; }, compare: "custom", num: p => BANOS_SCORE[p.estadoBanos]??-1, criterionId: "estadoBanos" },
+    { label: "Estado cocina", get: p => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?c.icon+" "+c.label:"—"; }, compare: "custom", num: p => COCINA_SCORE_MAP[p.estadoCocina]??-1, criterionId: "estadoCocina" },
+    { label: "Tipo A/C", get: p => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?c.icon+" "+c.label:"—"; }, compare: "custom", num: p => AIRE_SCORE_MAP[p.tipoAire]??-1, criterionId: "tipoAire" },
     { label: "Vistas", get: p => (p.vistas || []).join(", ") || "—", compare: "none", criterionId: "vistas" },
     { label: "Solería", get: p => p.soleria || "—", compare: "custom", num: p => SOLERIA_SCORE[p.soleria] ?? -1, criterionId: "soleria" },
     { label: "Cert. energético", get: p => p.certEnergetico || "—", compare: "none" },
@@ -986,6 +1104,11 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             {prop.soleria && <span className="tag tag-amber">◻ {prop.soleria}</span>}
             {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
             {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
+            {prop.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===prop.estadoBanos); return c?<span className="tag tag-amber">{c.icon} Baños: {c.label}</span>:null; })()}
+            {prop.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===prop.estadoCocina); return c?<span className="tag tag-amber">{c.icon} Cocina: {c.label}</span>:null; })()}
+            {prop.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===prop.tipoAire); return c?<span className="tag">{c.icon} A/C: {c.label}</span>:null; })()}
+            {(prop.cocinaPositivos||[]).map(v => { const p=COCINA_POSITIVOS.find(x=>x.val===v); return p?<span key={v} className="tag tag-green">✅ {p.label}</span>:null; })}
+            {(prop.cocinaNegativos||[]).map(v => { const p=COCINA_NEGATIVOS.find(x=>x.val===v); return p?<span key={v} className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)"}}>🔴 {p.label}</span>:null; })}
           </div>
 
           {/* Laure */}
@@ -1192,6 +1315,9 @@ export default function App() {
                   {p.tipoInmueble && <span className="tag tag-blue">{p.tipoInmueble}</span>}
                   {p.planta && <span className="tag">{p.planta}</span>}
                   {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"],["ascensor","🛗"],["lavadero","🫧"]].map(([k,e]) => p[k] ? <span key={k} className="tag tag-green">{e}</span> : null)}
+                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" style={{fontSize:10}}>{c.icon}</span>:null; })()}
+                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" style={{fontSize:10}}>🍳{c.icon}</span>:null; })()}
+                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" style={{fontSize:10}}>{c.icon}</span>:null; })()}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
