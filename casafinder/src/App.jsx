@@ -1382,12 +1382,23 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                  {p.tipoInmueble && <span className="tag tag-blue">{p.tipoInmueble}</span>}
-                  {p.planta && <span className="tag">{p.planta}</span>}
-                  {[["trastero","📦"],["garaje","🚗"],["terraza","🌿"],["piscina","🏊"],["aireCond","❄️"],["ascensor","🛗"],["lavadero","🫧"]].map(([k,e]) => p[k] ? <span key={k} className="tag tag-green">{e}</span> : null)}
-                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" style={{fontSize:10}}>{c.icon}</span>:null; })()}
-                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" style={{fontSize:10}}>🍳{c.icon}</span>:null; })()}
-                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" style={{fontSize:10}}>{c.icon}</span>:null; })()}
+                  {p.tipoInmueble && <span className="tag tag-blue" title={p.tipoInmueble}>{p.tipoInmueble}</span>}
+                  {p.planta && <span className="tag" title={"Planta: " + p.planta}>{p.planta}</span>}
+                  {[
+                    ["trastero","📦","Trastero"],
+                    ["garaje","🚗","Garaje"],
+                    ["terraza","🌿","Terraza"],
+                    ["piscina","🏊","Piscina"],
+                    ["aireCond","❄️","Aire acondicionado"],
+                    ["ascensor","🛗","Ascensor"],
+                    ["lavadero","🫧","Lavadero"]
+                  ].map(([k,e,lbl]) => p[k] ? <span key={k} className="tag tag-green" title={lbl}>{e}</span> : null)}
+                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" style={{fontSize:10}} title={"Baños: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
+                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" style={{fontSize:10}} title={"Cocina: "+c.label+" — "+c.desc}>🍳{c.icon}</span>:null; })()}
+                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" style={{fontSize:10}} title={"A/C: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
+                  {p.soleria && <span className="tag tag-amber" style={{fontSize:10}} title={"Solería: "+p.soleria}>🪨</span>}
+                  {p.orientacion && <span className="tag" style={{fontSize:10}} title={"Orientación: "+p.orientacion}>🧭</span>}
+                  {(p.vistas||[]).length>0 && <span className="tag tag-blue" style={{fontSize:10}} title={"Vistas: "+(p.vistas||[]).join(", ")}>👁</span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
