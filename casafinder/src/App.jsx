@@ -223,7 +223,7 @@ const css = `
   .toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.15s;user-select:none;background:var(--surface);color:var(--inkMid)}
   .toggle.on{background:var(--greenBg);border-color:#a8d5be;color:var(--green)}
   .toggle-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}
-  .tag{display:inline-flex;align-items:center;gap:3px;background:var(--dim);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;color:var(--inkMid);font-weight:500;white-space:nowrap}
+  .tag{display:inline-flex;align-items:center;gap:3px;background:var(--dim);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:13px;color:var(--inkMid);font-weight:500;white-space:nowrap}
   .tag-green{background:var(--greenBg);border-color:#a8d5be;color:var(--green)}
   .tag-blue{background:var(--blueBg);border-color:#93b4e8;color:var(--blue)}
   .tag-amber{background:var(--amberBg);border-color:#e8d598;color:var(--amber)}
@@ -614,7 +614,7 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               <div className="sec">Características</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🫧 Lavadero"]].map(([k,lbl]) => (
+                {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🧺 Lavadero"]].map(([k,lbl]) => (
                   <Toggle key={k} val={form[k]} onChange={v => s(k, v)} label={lbl} />
                 ))}
               </div>
@@ -1107,7 +1107,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
 
           {/* Tags */}
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
-            {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🫧 Lavadero"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
+            {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🧺 Lavadero"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
             {prop.soleria && <span className="tag tag-amber">🪨 {prop.soleria}</span>}
             {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
             {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
@@ -1391,14 +1391,14 @@ export default function App() {
                     ["piscina","🏊","Piscina"],
                     ["aireCond","❄️","Aire acondicionado"],
                     ["ascensor","🛗","Ascensor"],
-                    ["lavadero","🫧","Lavadero"]
+                    ["lavadero","🧺","Lavadero"]
                   ].map(([k,e,lbl]) => p[k] ? <span key={k} className="tag tag-green" title={lbl}>{e}</span> : null)}
-                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" style={{fontSize:10}} title={"Baños: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
-                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" style={{fontSize:10}} title={"Cocina: "+c.label+" — "+c.desc}>🍳{c.icon}</span>:null; })()}
-                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" style={{fontSize:10}} title={"A/C: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
-                  {p.soleria && <span className="tag tag-amber" style={{fontSize:10}} title={"Solería: "+p.soleria}>🪨</span>}
-                  {p.orientacion && <span className="tag" style={{fontSize:10}} title={"Orientación: "+p.orientacion}>🧭</span>}
-                  {(p.vistas||[]).length>0 && <span className="tag tag-blue" style={{fontSize:10}} title={"Vistas: "+(p.vistas||[]).join(", ")}>👁</span>}
+                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" title={"Baños: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
+                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" title={"Cocina: "+c.label+" — "+c.desc}>🍳{c.icon}</span>:null; })()}
+                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" title={"A/C: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
+                  {p.soleria && <span className="tag tag-amber" title={"Solería: "+p.soleria}>🪨</span>}
+                  {p.orientacion && <span className="tag" title={"Orientación: "+p.orientacion}>🧭</span>}
+                  {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}>👁</span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
