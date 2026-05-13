@@ -1252,7 +1252,8 @@ export default function App() {
       });
       return out;
     };
-    const cleanP = clean(p);
+    // JSON round-trip is the only 100% reliable way to strip undefined
+    const cleanP = JSON.parse(JSON.stringify(clean(p)));
     try {
       await setDoc(doc(db, "properties", id), cleanP);
       setShowAdd(false); setEditing(null);
