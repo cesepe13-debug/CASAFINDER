@@ -1108,7 +1108,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
           {/* Tags */}
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
             {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🫧 Lavadero"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
-            {prop.soleria && <span className="tag tag-amber">◻ {prop.soleria}</span>}
+            {prop.soleria && <span className="tag tag-amber">🪨 {prop.soleria}</span>}
             {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
             {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
             {prop.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===prop.estadoBanos); return c?<span className="tag tag-amber">{c.icon} Baños: {c.label}</span>:null; })()}
