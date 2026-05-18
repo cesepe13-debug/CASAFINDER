@@ -1170,6 +1170,7 @@ export default function App() {
   const [detail, setDetail] = useState(null);
   const [sort, setSort] = useState("score");
   const [filter, setFilter] = useState("");
+  const [zoneFilter, setZoneFilter] = useState("");
 
   useEffect(() => {
     const cleanUndefined = (obj) => {
@@ -1283,9 +1284,21 @@ export default function App() {
   const sortedAll = [...scored].sort((a, b) => b.pts - a.pts);
   const rankMap = Object.fromEntries(sortedAll.map((p, i) => [p.id, i + 1]));
 
+  const getRatio = (p) => {
+    const m2 = p.sizeUtil || p.sizeConstruida || 0;
+    return m2 && p.price ? Math.round(p.price / m2) : 999999;
+  };
+
   const visible = scored
     .filter(p => !filter || [p.title, p.zone, p.address].join(" ").toLowerCase().includes(filter.toLowerCase()))
-    .sort((a, b) => sort === "score" ? b.pts - a.pts : sort === "price" ? (a.price || 0) - (b.price || 0) : (b.sizeUtil || 0) - (a.sizeUtil || 0));
+    .filter(p => !zoneFilter || p.zone === zoneFilter)
+    .sort((a, b) => {
+      if (sort === "score") return b.pts - a.pts;
+      if (sort === "price") return (a.price || 0) - (b.price || 0);
+      if (sort === "size") return (b.sizeUtil || b.sizeConstruida || 0) - (a.sizeUtil || a.sizeConstruida || 0);
+      if (sort === "ratio") return getRatio(a) - getRatio(b);
+      return 0;
+    });
 
   const best = Math.max(0, ...scored.map(s => s.pts));
   const avgPrice = props.length ? Math.round(props.reduce((a, b) => a + (b.price || 0), 0) / props.length) : 0;
@@ -1311,8 +1324,14 @@ export default function App() {
         <select value={sort} onChange={e => setSort(e.target.value)}
           style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 9px", fontSize: 12, outline: "none" }}>
           <option value="score">Ranking</option>
-          <option value="price">Precio</option>
-          <option value="size">Tamaño</option>
+          <option value="price">Precio ↑</option>
+          <option value="size">Más grandes</option>
+          <option value="ratio">Mejor €/m²</option>
+        </select>
+        <select value={zoneFilter} onChange={e => setZoneFilter(e.target.value)}
+          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 9px", fontSize: 12, outline: "none", maxWidth: 140 }}>
+          <option value="">Todas las zonas</option>
+          {[...new Set(props.map(p => p.zone).filter(Boolean))].sort().map(z => <option key={z} value={z}>{z}</option>)}
         </select>
         <button className="btn btn-ghost btn-sm" onClick={() => setShowCompare(true)}
           style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
