@@ -470,7 +470,7 @@ function PropertyModal({ prop, onSave, onClose }) {
     soleria: "", certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
     estadoBanos: "", estadoCocina: "", cocinaPositivos: [], cocinaNegativos: [], tipoAire: "",
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
-    distanciaKm: 0, comunidad: 0, ibi: 0, inmobiliaria: "", notes: "",
+    distanciaKm: 0, comunidad: 0, ibi: 0, vrc: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
   };
   const cleanVal = (v) => v === undefined ? null : v;
@@ -605,6 +605,34 @@ function PropertyModal({ prop, onSave, onClose }) {
                 {numField("IBI", "ibi", "€/año")}
                 {numField("Dist. trabajo", "distanciaKm", "km")}
               </>)}
+
+              <div className="sec">Valor de Referencia Catastral (VRC)</div>
+              {row2(<>
+                {numField("VRC", "vrc", "€")}
+                <div>
+                  <label className="label">Base imponible ITP</label>
+                  <input type="text" readOnly
+                    value={(() => { const b=Math.max(form.price||0,form.vrc||0); return b>0?Number(b).toLocaleString("es-ES")+" €":"—"; })()}
+                    style={{ background:"var(--dim)", color:form.vrc>form.price?"var(--red)":"var(--inkDim)", fontWeight:form.vrc>form.price?600:400 }}/>
+                </div>
+              </>)}
+              {(form.price>0) && (
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, background:"var(--dim)", borderRadius:8, padding:"12px 14px", border:"1px solid var(--border)", marginTop:8 }}>
+                  <div>
+                    <div style={{ fontSize:10, color:"var(--inkFaint)", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:3 }}>ITP s/ precio venta (7%)</div>
+                    <div style={{ fontSize:16, fontWeight:600 }}>{Number(Math.round((form.price||0)*0.07)).toLocaleString("es-ES")} €</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize:10, color:form.vrc>form.price?"var(--red)":"var(--inkFaint)", textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:3 }}>
+                      ITP real a pagar (7%){form.vrc>form.price?" ⚠":""}
+                    </div>
+                    <div style={{ fontSize:16, fontWeight:600, color:form.vrc>form.price?"var(--red)":"var(--ink)" }}>
+                      {Number(Math.round(Math.max(form.price||0,form.vrc||0)*0.07)).toLocaleString("es-ES")} €
+                    </div>
+                    {form.vrc>form.price && <div style={{ fontSize:11, color:"var(--red)", marginTop:2 }}>+{Number(Math.round((form.vrc-form.price)*0.07)).toLocaleString("es-ES")} € extra por VRC</div>}
+                  </div>
+                </div>
+              )}
 
               <div className="sec">Orientación</div>
               <select value={form.orientacion || ""} onChange={e => s("orientacion", e.target.value)}>
@@ -865,6 +893,8 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
     { label: "Orientación", get: p => p.orientacion || "—", compare: "custom", num: p => ORIENTACION_SCORE[p.orientacion] ?? -1, criterionId: "orientacion" },
     { label: "Comunidad", get: p => p.comunidad ? Number(p.comunidad).toLocaleString("es-ES") + " €/mes" : "—", compare: "lower", num: p => p.comunidad || 9999, criterionId: "comunidad" },
     { label: "IBI", get: p => p.ibi ? Number(p.ibi).toLocaleString("es-ES") + " €/año" : "—", compare: "lower", num: p => p.ibi || 9999, criterionId: "ibi" },
+    { label: "VRC", get: p => p.vrc>0 ? Number(p.vrc).toLocaleString("es-ES")+" €"+(p.vrc>p.price?" ⚠":"") : "—", compare: "none" },
+    { label: "ITP real (7%)", get: p => p.price>0 ? Number(Math.round(Math.max(p.price,p.vrc||0)*0.07)).toLocaleString("es-ES")+" €" : "—", compare: "lower", num: p => p.price>0 ? Math.round(Math.max(p.price,p.vrc||0)*0.07) : 9999 },
     { label: "Dist. trabajo", get: p => p.distanciaKm ? p.distanciaKm + " km" : "—", compare: "lower", num: p => p.distanciaKm || 9999, criterionId: "distanciaKm" },
     { label: "Trastero", get: p => p.trastero ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.trastero, criterionId: "trastero" },
     { label: "Garaje", get: p => p.garaje ? "✓ Sí" : "✗ No", compare: "boolean", bool: p => p.garaje, criterionId: "garaje" },
@@ -1074,6 +1104,23 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             <Cell label="Dist. trabajo" val={prop.distanciaKm > 0 ? prop.distanciaKm + " km" : null} />
 
             <Cell label="IBI" val={prop.ibi > 0 ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null} />
+            {prop.vrc > 0 && <>
+              <div className="dcell">
+                <div className="dcell-l">VRC</div>
+                <div className="dcell-v" style={{ color:prop.vrc>prop.price?"var(--red)":"var(--ink)" }}>{Number(prop.vrc).toLocaleString("es-ES")} €{prop.vrc>prop.price?" ⚠":""}</div>
+              </div>
+              <div className="dcell">
+                <div className="dcell-l">ITP s/ precio (7%)</div>
+                <div className="dcell-v">{Number(Math.round(prop.price*0.07)).toLocaleString("es-ES")} €</div>
+              </div>
+              <div className="dcell" style={{ background:prop.vrc>prop.price?"#fef2f2":"inherit" }}>
+                <div className="dcell-l" style={{ color:prop.vrc>prop.price?"var(--red)":"var(--inkFaint)" }}>ITP real a pagar (7%)</div>
+                <div className="dcell-v" style={{ color:prop.vrc>prop.price?"var(--red)":"var(--ink)", fontWeight:600 }}>
+                  {Number(Math.round(Math.max(prop.price,prop.vrc)*0.07)).toLocaleString("es-ES")} €
+                  {prop.vrc>prop.price && <span style={{ fontSize:11, display:"block", fontWeight:400 }}>+{Number(Math.round((prop.vrc-prop.price)*0.07)).toLocaleString("es-ES")} € extra</span>}
+                </div>
+              </div>
+            </>}
             <Cell label="Año construcción" val={prop.anoConstruccion > 1900 ? prop.anoConstruccion : null} />
             <Cell label="Antigüedad" val={antiguedad != null ? antiguedad + " años" : null} />
             {prop.certEnergetico ? (
@@ -1206,6 +1253,7 @@ export default function App() {
       distanciaKm: Number(form.distanciaKm) || 0,
       comunidad: Number(form.comunidad) || 0,
       ibi: Number(form.ibi) || 0,
+      vrc: Number(form.vrc) || 0,
       numTerrazas: Number(form.numTerrazas) || 0,
       anoConstruccion: Number(form.anoConstruccion) || 0,
       consumoEnergetico: form.consumoEnergetico || "",
