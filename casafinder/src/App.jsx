@@ -1444,6 +1444,21 @@ export default function App() {
                       <div style={{ fontSize: 9, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 1 }}>comunidad</div>
                     </div>
                   </div>
+                  {p.price > 0 && (() => {
+                    const base = Math.max(p.price, p.vrc || 0);
+                    const itp = Math.round(base * 0.07);
+                    const usaVrc = p.vrc > p.price;
+                    return (
+                      <div style={{ marginTop: 6, borderTop: "1px solid var(--border)", paddingTop: 6 }}>
+                        <div style={{ fontSize: 13, fontWeight: 700, color: usaVrc ? "var(--red)" : "var(--green)" }}>
+                          ITP: {Number(itp).toLocaleString("es-ES")} €
+                        </div>
+                        <div style={{ fontSize: 10, color: usaVrc ? "var(--red)" : "var(--green)", marginTop: 1 }}>
+                          s/ {usaVrc ? "VRC" : "precio venta"}: {Number(base).toLocaleString("es-ES")} €
+                        </div>
+                      </div>
+                    );
+                  })()}
                   <div style={{ fontSize: 11, color: "var(--inkMid)", marginTop: 3 }}>
                     {ratio}{ratio && m2 ? " · " : ""}{m2 ? m2 + " m²" : ""}{m2 && p.rooms ? " · " : ""}{p.rooms ? p.rooms + " hab." : ""}
                   </div>
