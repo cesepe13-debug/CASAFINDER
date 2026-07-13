@@ -450,6 +450,8 @@ function printPDF(prop, pts, rank) {
   if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
   if (prop.comunidad > 160) contras.push("Comunidad alta: " + prop.comunidad + " €/mes");
   if (!prop.trastero) contras.push("Sin trastero");
+  if (prop.otrosPros) pros.push(prop.otrosPros);
+  if (prop.otrosContras) contras.push(prop.otrosContras);
   if (!prop.garaje) contras.push("Sin garaje");
   if (prop.orientacion === "Sur" || prop.orientacion === "Suroeste") pros.unshift("Orientación " + prop.orientacion);
   if (prop.trastero) pros.push("Tiene trastero");
@@ -619,6 +621,7 @@ function PropertyModal({ prop, onSave, onClose }) {
     piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false, lavadero: false,
     soleria: "", certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
     estadoBanos: "", estadoCocina: "", cocinaPositivos: [], cocinaNegativos: [], tipoAire: "",
+    visitada: false, fechaVisita: "", personaVisita: "", otrosPros: "", otrosContras: "",
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, vrc: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
@@ -883,6 +886,22 @@ function PropertyModal({ prop, onSave, onClose }) {
                 </div>
               </>)}
 
+              <div className="sec">Otros pros y contras</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                <div>
+                  <label className="label" style={{ color: "var(--green)" }}>✅ Otros pros</label>
+                  <textarea value={form.otrosPros || ""} onChange={e => s("otrosPros", e.target.value)}
+                    placeholder="Características positivas que no aparecen en el listado…"
+                    style={{ minHeight: 60, resize: "vertical", fontSize: 12 }} />
+                </div>
+                <div>
+                  <label className="label" style={{ color: "var(--red)" }}>🔴 Otros contras</label>
+                  <textarea value={form.otrosContras || ""} onChange={e => s("otrosContras", e.target.value)}
+                    placeholder="Características negativas que no aparecen en el listado…"
+                    style={{ minHeight: 60, resize: "vertical", fontSize: 12 }} />
+                </div>
+              </div>
+
               <div className="sec">Vistas</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {["Campo de golf","Mar","Montaña","Interior urbanización","Jardín","Piscina","Calle","Sin vistas"].map(v => (
@@ -900,7 +919,8 @@ function PropertyModal({ prop, onSave, onClose }) {
               </div>
 
               <div className="sec">Certificado energético</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, padding: !form.certEnergetico ? "10px" : "0", border: !form.certEnergetico ? "2.5px solid var(--red)" : "none", borderRadius: !form.certEnergetico ? "8px" : "0", background: !form.certEnergetico ? "#fef2f2" : "transparent" }}>
+                {!form.certEnergetico && <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 500, marginBottom: 8, display: "block", width: "100%" }}>⚠ Sin certificado energético indicado</span>}
                 {["Sí","En trámite","No indicado"].map(v => (
                   <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
                 ))}
@@ -945,7 +965,6 @@ function PropertyModal({ prop, onSave, onClose }) {
 
               <div className="sec">Estado</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                <Toggle val={form.enviadaLaure} onChange={v => s("enviadaLaure", v)} label="✉ Enviada a Laure" />
                 <Toggle val={form.visitada} onChange={v => s("visitada", v)} label="🏠 Visitada" />
               </div>
               {form.visitada && (
@@ -1200,7 +1219,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
 }
 
 // ── DetailModal ───────────────────────────────────────────────────────────────
-function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLaure }) {
+function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
   const { pts, bd } = scored;
   const [lightboxSrc, setLightboxSrc] = useState(null);
   const photos = prop.photos || [];
@@ -1306,7 +1325,12 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
                   </div>
                 </div>
               </>
-            ) : null}
+            ) : (
+              <div className="dcell" style={{ borderLeft: "3px solid var(--red)", background: "#fef2f2" }}>
+                <div className="dcell-l" style={{ color: "var(--red)" }}>Cert. energético</div>
+                <div className="dcell-v" style={{ color: "var(--red)", fontWeight: 600 }}>⚠ No indicado</div>
+              </div>
+            )}
             {prop.consumoEnergetico ? (
               <div className="dcell">
                 <div className="dcell-l">Consumo energético</div>
@@ -1349,12 +1373,11 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             {prop.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===prop.tipoAire); return c?<span className="tag">{c.icon} A/C: {c.label}</span>:null; })()}
             {(prop.cocinaPositivos||[]).map(v => { const p=COCINA_POSITIVOS.find(x=>x.val===v); return p?<span key={v} className="tag tag-green">✅ {p.label}</span>:null; })}
             {(prop.cocinaNegativos||[]).map(v => { const p=COCINA_NEGATIVOS.find(x=>x.val===v); return p?<span key={v} className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)"}}>🔴 {p.label}</span>:null; })}
+            {prop.otrosPros && <span className="tag tag-green" style={{maxWidth:"100%",whiteSpace:"normal"}}>✅ {prop.otrosPros}</span>}
+            {prop.otrosContras && <span className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)",maxWidth:"100%",whiteSpace:"normal"}}>🔴 {prop.otrosContras}</span>}
           </div>
 
-          {/* Laure */}
-          <div style={{ marginBottom: 14 }}>
-            <Toggle val={prop.enviadaLaure} onChange={() => onToggleLaure(prop.id)} label={prop.enviadaLaure ? "✉ Enviada a Laure" : "✉ Pendiente de enviar a Laure"} />
-          </div>
+
 
           {/* Notes */}
           {prop.notes && (
@@ -1473,6 +1496,8 @@ export default function App() {
       enviadaLaure: !!form.enviadaLaure,
       sold: !!form.sold,
       visitada: !!form.visitada,
+      otrosPros: form.otrosPros || "",
+      otrosContras: form.otrosContras || "",
       fechaVisita: form.fechaVisita || "",
       personaVisita: form.personaVisita || "",
       photos: form.photos || [],
@@ -1589,7 +1614,7 @@ export default function App() {
           ["Propiedades", props.length],
           ["Mejor puntuación", best > 0 ? best + " / 100" : "—"],
           ["Precio medio", avgPrice ? Number(avgPrice).toLocaleString("es-ES") + " €" : "—"],
-          ["Enviadas a Laure", props.filter(p => p.enviadaLaure).length + " / " + props.length],
+
         ].map(([l, v]) => (
           <div key={l} className="stat-item">
             <div style={{ fontSize: 10, color: "var(--inkFaint)", letterSpacing: "0.07em", textTransform: "uppercase" }}>{l}</div>
@@ -1672,9 +1697,8 @@ export default function App() {
                   {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}>👁</span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
-                    onClick={e => { e.stopPropagation(); toggleLaure(p.id); }}>
-                    {p.visitada ? "🏠 Visitada" + (p.fechaVisita ? " · " + new Date(p.fechaVisita).toLocaleDateString("es-ES") : "") : ""}{p.visitada && p.enviadaLaure ? " · " : ""}{p.enviadaLaure ? "✉ Laure" : !p.visitada ? "✉ Pendiente Laure" : ""}
+                  <span style={{ fontSize: 11, color: p.visitada ? "var(--green)" : "var(--inkFaint)", fontWeight: 500 }}>
+                    {p.visitada ? "🏠 Visitada" + (p.fechaVisita ? " · " + new Date(p.fechaVisita).toLocaleDateString("es-ES") : "") : "Sin visitar"}
                   </span>
                   <div style={{ display: "flex", gap: 4 }}>
                     <button className={`sold-btn ${p.sold ? "issold" : "unsold"}`}
@@ -1707,7 +1731,7 @@ export default function App() {
       {showAdd && <PropertyModal prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
       {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
       {showCompare && <CompareModal props={props} criteria={criteria} rankMap={rankMap} onClose={() => setShowCompare(false)} />}
-      {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} onToggleLaure={toggleLaure} />}
+      {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} />}
     </>
   );
 }
