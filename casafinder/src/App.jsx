@@ -1678,6 +1678,7 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                  {!p.certEnergetico && <span className="tag" title="Sin certificado energético" style={{ background:"#fef2f2", borderColor:"var(--red)", borderWidth:2, color:"var(--red)", fontWeight:600 }}>⚠ Sin cert.</span>}
                   {p.tipoInmueble && <span className="tag tag-blue" title={p.tipoInmueble}>{p.tipoInmueble}</span>}
                   {p.planta && <span className="tag" title={"Planta: " + p.planta}>{p.planta}</span>}
                   {[
