@@ -101,6 +101,16 @@ const COCINA_SCORE_MAP = Object.fromEntries(COCINA_CATS.map(c => [c.val, c.score
 const AIRE_SCORE_MAP = Object.fromEntries(AIRE_CATS.map(c => [c.val, c.score]));
 const CERT_COLORS = { "A": "#1a5c3a", "B": "#2d8a4e", "C": "#e07b00", "D": "#e06000", "E": "#cc4400", "F": "#b83200", "G": "#991b1b" };
 
+const CERT_DESC = {
+  "A": "Máxima eficiencia energética. Consumo muy bajo, excelente aislamiento. Ahorro significativo en facturas de luz y calefacción. La mejor calificación posible.",
+  "B": "Alta eficiencia. Consumo bajo y buen aislamiento. Facturas reducidas respecto a la media. Muy buena calificación.",
+  "C": "Eficiencia media-alta. Consumo moderado. Puede requerir pequeñas mejoras a largo plazo, pero es una calificación aceptable.",
+  "D": "Eficiencia media. Es la calificación más común en viviendas de segunda mano. Consumo notable pero no excesivo. Posible margen de mejora.",
+  "E": "Eficiencia baja. Consumo elevado. Facturas altas. Recomendable estudiar mejoras de aislamiento o instalaciones.",
+  "F": "Eficiencia muy baja. Consumo muy alto. Facturas considerablemente elevadas. Probable necesidad de reforma para mejorar el aislamiento.",
+  "G": "La peor calificación. Consumo extremadamente alto. Facturas muy elevadas. Reforma energética prácticamente necesaria.",
+};
+
 // ── Scoring ───────────────────────────────────────────────────────────────────
 function scoreColor(pts) {
   return pts >= 75 ? "#1a5c3a" : pts >= 48 ? "#8a5c00" : "#991b1b";
@@ -188,7 +198,7 @@ async function extractFromText(text, url) {
 
 // ── CSS ───────────────────────────────────────────────────────────────────────
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --bg: #f4f4f2; --surface: #ffffff; --dim: #f0f0ee;
@@ -200,12 +210,12 @@ const css = `
     --blue: #1d3f7a; --blueBg: #eff4ff;
     --sh: 0 1px 3px rgba(0,0,0,0.08); --shMd: 0 4px 16px rgba(0,0,0,0.1);
   }
-  body { background:var(--bg); color:var(--ink); font-family:'Inter',sans-serif; min-height:100vh; font-size:14px; }
+  body { background:var(--bg); color:var(--ink); font-family:'Outfit',sans-serif; min-height:100vh; font-size:14px; }
   ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--borderMid);border-radius:2px}
-  input,textarea,select{font-family:'Inter',sans-serif;background:var(--dim);border:1px solid var(--border);border-radius:6px;color:var(--ink);padding:8px 11px;font-size:13px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%}
+  input,textarea,select{font-family:'Outfit',sans-serif;background:var(--dim);border:1px solid var(--border);border-radius:6px;color:var(--ink);padding:8px 11px;font-size:13px;outline:none;transition:border-color 0.15s,box-shadow 0.15s;width:100%}
   input:focus,textarea:focus,select:focus{border-color:var(--ink);box-shadow:0 0 0 2px rgba(0,0,0,0.06)}
-  button{cursor:pointer;font-family:'Inter',sans-serif}
-  h1,h2,h3{font-family:'Space Grotesk',sans-serif}
+  button{cursor:pointer;font-family:'Outfit',sans-serif}
+  h1,h2,h3{font-family:'Outfit',sans-serif}
   .label{font-size:11px;color:var(--inkDim);font-weight:500;letter-spacing:0.06em;text-transform:uppercase;display:block;margin-bottom:4px}
   .pulse{animation:pulse 1.8s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
@@ -230,7 +240,7 @@ const css = `
   .tag-win{background:#111;color:white;border-color:#111}
   .prop-card{background:var(--surface);border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.2s,border-color 0.2s;box-shadow:var(--sh);position:relative;overflow:hidden}
   .prop-card:hover{box-shadow:var(--shMd);border-color:var(--borderMid)}
-  .rank-num{position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1;font-family:'Space Grotesk',sans-serif}
+  .rank-num{position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1;font-family:'Outfit',sans-serif}
   .score-ring{position:relative;flex-shrink:0}
   .score-ring svg{display:block}
   .score-ring .sval{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -300,7 +310,7 @@ function ScoreRing({ pts, size = 52, rank }) {
           style={{ transition: "stroke-dasharray 0.5s ease" }} />
       </svg>
       <div className="sval">
-        <span style={{ fontSize: size*0.26, fontWeight: 700, color: col, fontFamily: "Space Grotesk,sans-serif", lineHeight: 1 }}>{pts}</span>
+        <span style={{ fontSize: size*0.26, fontWeight: 700, color: col, fontFamily: "Outfit,sans-serif", lineHeight: 1 }}>{pts}</span>
         {rank && <span style={{ fontSize: 9, color: "#aaa", marginTop: 1 }}>#{rank}</span>}
       </div>
     </div>
@@ -425,40 +435,180 @@ function printPDF(prop, pts, rank) {
   const w = window.open("", "_blank");
   const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
   const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
-  const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"]].filter(([k]) => prop[k]).map(([,l]) => l);
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title||"Propiedad"}</title>
-  <style>body{font-family:Arial,sans-serif;margin:32px;color:#111;font-size:13px;line-height:1.5}h1{font-size:20px;margin-bottom:4px}
-  .sub{color:#666;font-size:12px;margin-bottom:20px}.score-box{float:right;text-align:center;border:2px solid #111;border-radius:8px;padding:8px 14px}
-  .score-n{font-size:32px;font-weight:700;line-height:1}.score-l{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.08em}
-  .price{font-size:28px;font-weight:700;margin:0 0 4px}.ratio{font-size:13px;color:#555;margin-bottom:20px}
-  .grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #ddd;border-radius:6px;overflow:hidden;margin-bottom:16px}
-  .cell{padding:8px 12px;border-bottom:1px solid #eee;border-right:1px solid #eee;font-size:12px}.cell:nth-child(even){border-right:none}
-  .cl{color:#aaa;font-size:10px;text-transform:uppercase;letter-spacing:0.05em}.cv{font-weight:500;margin-top:2px}
-  .tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:14px}.tag{border:1px solid #ddd;border-radius:3px;padding:2px 7px;font-size:11px}
-  .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:6px;padding:10px 14px;font-size:12px;color:#555}</style></head><body>
-  <div class="score-box"><div class="score-n">${pts}</div><div class="score-l">Idoneidad</div><div style="font-size:12px;color:#888">Ranking #${rank}</div></div>
-  <h1>${prop.title||"Sin título"}</h1>
-  <div class="sub">${[prop.address,prop.zone].filter(Boolean).join(" · ")}</div>
-  <div class="price">${prop.price?Number(prop.price).toLocaleString("es-ES")+" €":"—"}</div>
-  <div class="ratio">${ratio}${prop.sizeUtil?" · "+prop.sizeUtil+" m² útiles":""}${prop.sizeConstruida?" · "+prop.sizeConstruida+" m² construidos":""}</div>
-  <div class="grid">
-    ${[["Tipo",prop.tipoInmueble],["Planta",prop.planta],["Habitaciones",prop.rooms||null],["Baños",prop.bathrooms||null],
-      ["Orientación",prop.orientacion],["Dist. trabajo",prop.distanciaKm?prop.distanciaKm+" km":null],
-      ["Comunidad",prop.comunidad?Number(prop.comunidad).toLocaleString("es-ES")+" €/mes":null],
-      ["IBI",prop.ibi?Number(prop.ibi).toLocaleString("es-ES")+" €/año":null],
-      ["Año construc.",prop.anoConstruccion||null],["Antigüedad",prop.anoConstruccion?CURRENT_YEAR-prop.anoConstruccion+" años":null],
-      ["Cert. energético",prop.certEnergetico],["Consumo",prop.consumoEnergetico?prop.consumoEnergetico+" kWh/m²":null],
-      ["Emisiones",prop.emisionesEnergetico?prop.emisionesEnergetico+" kg CO₂/m²":null],
-      ["Inmobiliaria",prop.inmobiliaria]
-    ].filter(([,v])=>v).map(([l,v])=>`<div class="cell"><div class="cl">${l}</div><div class="cv">${v}</div></div>`).join("")}
+  const base = Math.max(prop.price || 0, prop.vrc || 0);
+  const usaVrc = prop.vrc > prop.price;
+  const itpReal = base ? Math.round(base * 0.07).toLocaleString("es-ES") + " €" : "—";
+  const itpVenta = prop.price ? Math.round(prop.price * 0.07).toLocaleString("es-ES") + " €" : "—";
+  const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"],["lavadero","Lavadero"]].filter(([k]) => prop[k]).map(([,l]) => l);
+  const banosCat = BANOS_CATS.find(c => c.val === prop.estadoBanos);
+  const cocinaCat = COCINA_CATS.find(c => c.val === prop.estadoCocina);
+  const aireCat = AIRE_CATS.find(c => c.val === prop.tipoAire);
+  const pros = [...(prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean)];
+  const contras = [...(prop.cocinaNegativos || []).map(v => COCINA_NEGATIVOS.find(x => x.val === v)?.label).filter(Boolean)];
+  if (usaVrc) contras.unshift("VRC superior al precio → ITP mayor");
+  if (prop.orientacion === "Norte") contras.push("Orientación Norte");
+  if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
+  if (prop.comunidad > 160) contras.push("Comunidad alta: " + prop.comunidad + " €/mes");
+  if (!prop.trastero) contras.push("Sin trastero");
+  if (!prop.garaje) contras.push("Sin garaje");
+  if (prop.orientacion === "Sur" || prop.orientacion === "Suroeste") pros.unshift("Orientación " + prop.orientacion);
+  if (prop.trastero) pros.push("Tiene trastero");
+  if (prop.garaje) pros.push("Tiene garaje");
+  if ((prop.vistas || []).includes("Mar")) pros.unshift("Vistas al mar");
+
+  const mainPhoto = (prop.photos || [])[0] || "";
+  const restPhotos = (prop.photos || []).slice(1);
+
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title || "Propiedad"}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Outfit',sans-serif;padding:28px 32px;color:#111;font-size:13px;line-height:1.5}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+    .logo{font-size:10px;color:#888;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px}
+    h1{font-size:20px;font-weight:700;margin-bottom:3px;line-height:1.2}
+    .subtitle{color:#666;font-size:12px;margin-bottom:14px}
+    .score-box{text-align:center;border:2px solid #111;border-radius:8px;padding:8px 14px;flex-shrink:0}
+    .score-n{font-size:28px;font-weight:700;line-height:1}
+    .score-l{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.08em}
+    .score-r{font-size:11px;color:#555}
+    .main-photo{width:100%;height:260px;object-fit:cover;border-radius:8px;margin-bottom:16px;display:block;background:#e0e0dc}
+    .price-row{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #e0e0dc}
+    .price{font-size:28px;font-weight:700}
+    .price-sub{font-size:11px;color:#666;margin-top:2px}
+    .price-warn{font-size:11px;color:#991b1b;font-weight:600;margin-top:2px}
+    .price-right{text-align:right}
+    .com-val{font-size:18px;font-weight:700;color:#1a5c3a}
+    .com-lbl{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.05em}
+    .ibi-val{font-size:12px;color:#555;margin-top:3px}
+    .stats{display:flex;border:1px solid #e0e0dc;border-radius:8px;overflow:hidden;margin-bottom:16px}
+    .stat{flex:1;padding:9px 10px;border-right:1px solid #e0e0dc;text-align:center}
+    .stat:last-child{border-right:none}
+    .stat-v{font-size:16px;font-weight:700}
+    .stat-l{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    .sec{font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;margin-top:12px}
+    .data-grid{border:1px solid #e0e0dc;border-radius:6px;overflow:hidden}
+    .dr{display:flex;border-bottom:1px solid #f0f0ee}
+    .dr:last-child{border-bottom:none}
+    .dl{width:110px;flex-shrink:0;padding:6px 9px;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.04em;background:#f8f8f6;border-right:1px solid #e0e0dc;display:flex;align-items:center}
+    .dv{padding:6px 9px;font-size:12px;font-weight:500;display:flex;align-items:center}
+    .tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+    .tag{border:1px solid #e0e0dc;border-radius:3px;padding:2px 7px;font-size:11px;color:#555}
+    .tag-g{background:#edf7f2;border-color:#a8d5be;color:#1a5c3a}
+    .tag-r{background:#fef2f2;border-color:#fccfcf;color:#991b1b}
+    .tag-b{background:#eff4ff;border-color:#93b4e8;color:#1d3f7a}
+    .pros-contras{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .pros{background:#edf7f2;border:1px solid #a8d5be;border-radius:8px;padding:10px 12px}
+    .contras{background:#fef2f2;border:1px solid #fccfcf;border-radius:8px;padding:10px 12px}
+    .pros h3{font-size:10px;font-weight:700;color:#1a5c3a;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+    .contras h3{font-size:10px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px}
+    .pros li,.contras li{font-size:11px;list-style:none;margin-bottom:3px}
+    .pros li::before{content:"✓ ";font-weight:700;color:#1a5c3a}
+    .contras li::before{content:"✗ ";font-weight:700;color:#991b1b}
+    .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:8px;padding:10px 12px;font-size:12px;color:#555;line-height:1.6;margin-bottom:14px}
+    .notes-t{font-size:10px;font-weight:700;color:#8a5c00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px}
+    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:14px}
+    .gallery img{width:100%;height:65px;object-fit:cover;border-radius:4px}
+    .footer{border-top:1px solid #e0e0dc;padding-top:8px;display:flex;justify-content:space-between}
+    .footer-t{font-size:10px;color:#aaa}
+    .visit-box{background:#edf7f2;border:1px solid #a8d5be;border-radius:6px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:#1a5c3a}
+    @media print{body{padding:14px 18px}}
+  </style></head><body>
+  <div class="header">
+    <div style="flex:1;padding-right:16px">
+      <div class="logo">CasaFinder · Ficha de propiedad</div>
+      <h1>${prop.title || "Sin título"}</h1>
+      <div class="subtitle">${[prop.address, prop.zone].filter(Boolean).join(" · ")}</div>
+    </div>
+    <div class="score-box">
+      <div class="score-n">${pts}</div>
+      <div class="score-l">Idoneidad</div>
+      <div class="score-r">Ranking #${rank}</div>
+    </div>
   </div>
-  ${tags.length?`<div class="tags">${tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>`:""}
-  ${prop.vistas&&prop.vistas.length?`<p style="font-size:12px;color:#555;margin-bottom:14px">Vistas: ${prop.vistas.join(", ")}</p>`:""}
-  ${prop.notes?`<div class="notes">${prop.notes}</div>`:""}
+
+  ${mainPhoto ? `<img src="${mainPhoto}" class="main-photo" alt="">` : '<div class="main-photo" style="display:flex;align-items:center;justify-content:center;color:#aaa">Sin foto</div>'}
+
+  <div class="price-row">
+    <div>
+      <div class="price">${prop.price ? Number(prop.price).toLocaleString("es-ES") + " €" : "—"}</div>
+      <div class="price-sub">${ratio} · ITP s/ precio: ${itpVenta}</div>
+      ${usaVrc ? `<div class="price-warn">⚠ VRC: ${Number(prop.vrc).toLocaleString("es-ES")} € → ITP real: ${itpReal} (+${Math.round((prop.vrc - prop.price) * 0.07).toLocaleString("es-ES")} € extra)</div>` : ""}
+    </div>
+    <div class="price-right">
+      <div class="com-val" style="color:${prop.comunidad <= 130 ? "#1a5c3a" : prop.comunidad <= 160 ? "#e07b00" : "#991b1b"}">${prop.comunidad > 0 ? prop.comunidad + " €" : "?"}</div>
+      <div class="com-lbl">Comunidad / mes</div>
+      ${prop.ibi ? `<div class="ibi-val">IBI: ${Number(prop.ibi).toLocaleString("es-ES")} €/año</div>` : ""}
+    </div>
+  </div>
+
+  <div class="stats">
+    ${prop.sizeUtil > 0 ? `<div class="stat"><div class="stat-v">${prop.sizeUtil}</div><div class="stat-l">m² útiles</div></div>` : ""}
+    ${prop.sizeConstruida > 0 ? `<div class="stat"><div class="stat-v">${prop.sizeConstruida}</div><div class="stat-l">m² const.</div></div>` : ""}
+    ${prop.rooms > 0 ? `<div class="stat"><div class="stat-v">${prop.rooms}</div><div class="stat-l">Hab.</div></div>` : ""}
+    ${prop.bathrooms > 0 ? `<div class="stat"><div class="stat-v">${prop.bathrooms}</div><div class="stat-l">Baños</div></div>` : ""}
+    ${prop.planta ? `<div class="stat"><div class="stat-v">${prop.planta}</div><div class="stat-l">Planta</div></div>` : ""}
+    ${prop.orientacion ? `<div class="stat"><div class="stat-v">${prop.orientacion}</div><div class="stat-l">Orient.</div></div>` : ""}
+    ${prop.distanciaKm > 0 ? `<div class="stat"><div class="stat-v">${prop.distanciaKm} km</div><div class="stat-l">Al trabajo</div></div>` : ""}
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="sec">Datos</div>
+      <div class="data-grid">
+        ${[
+          ["Tipo", prop.tipoInmueble],
+          ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
+          ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
+          ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
+          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? prop.certEnergetico + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") : prop.certEnergetico],
+          ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
+          ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
+          ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
+          ["Inmobiliaria", prop.inmobiliaria],
+          ["VRC", prop.vrc > 0 ? Number(prop.vrc).toLocaleString("es-ES") + " €" + (usaVrc ? " ⚠" : "") : null],
+          ["ITP real", prop.price > 0 ? itpReal : null],
+        ].filter(([,v]) => v).map(([l,v]) => `<div class="dr"><div class="dl">${l}</div><div class="dv">${v}</div></div>`).join("")}
+        ${prop.visitada ? `
+          <div class="dr"><div class="dl">Visita</div><div class="dv" style="color:#1a5c3a;font-weight:600">✓ Visitada</div></div>
+          ${prop.fechaVisita ? `<div class="dr"><div class="dl">Fecha</div><div class="dv">${new Date(prop.fechaVisita).toLocaleDateString("es-ES")}</div></div>` : ""}
+          ${prop.personaVisita ? `<div class="dr"><div class="dl">Agente</div><div class="dv">${prop.personaVisita}</div></div>` : ""}
+        ` : ""}
+      </div>
+    </div>
+    <div>
+      <div class="sec">Características</div>
+      <div class="tags">${tags.map(t => `<span class="tag tag-g">${t}</span>`).join("")}</div>
+      ${(prop.vistas || []).length > 0 ? `<div class="sec">Vistas</div><div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag tag-b">👁 ${v}</span>`).join("")}</div>` : ""}
+      ${pros.length > 0 ? `<div class="sec" style="margin-top:10px;color:#1a5c3a">Aspectos positivos cocina</div><div class="tags">${pros.slice(0,4).map(p=>`<span class="tag tag-g">✅ ${p}</span>`).join("")}</div>` : ""}
+      ${contras.length > 0 && prop.cocinaNegativos?.length > 0 ? `<div class="sec" style="color:#991b1b">Aspectos negativos cocina</div><div class="tags">${(prop.cocinaNegativos||[]).map(v=>{const p=COCINA_NEGATIVOS.find(x=>x.val===v);return p?`<span class="tag tag-r">🔴 ${p.label}</span>`:""}).join("")}</div>` : ""}
+    </div>
+  </div>
+
+  <div class="sec">Pros y contras</div>
+  <div class="pros-contras">
+    <div class="pros"><h3>✓ Pros</h3><ul>${pros.map(p=>`<li>${p}</li>`).join("") || "<li>Sin pros registrados</li>"}</ul></div>
+    <div class="contras"><h3>✗ Contras</h3><ul>${contras.map(c=>`<li>${c}</li>`).join("") || "<li>Sin contras registrados</li>"}</ul></div>
+  </div>
+
+  ${prop.notes ? `<div class="notes"><div class="notes-t">📝 Notas</div>${prop.notes}</div>` : ""}
+
+  ${restPhotos.length > 0 ? `
+    <div class="sec">Galería de fotos (${restPhotos.length + 1})</div>
+    <div class="gallery">${restPhotos.map(src => `<img src="${src}" alt="">`).join("")}</div>
+  ` : ""}
+
+  <div class="footer">
+    <div class="footer-t">${prop.url ? prop.url : ""}</div>
+    <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
+  </div>
   </body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 400);
+  setTimeout(() => w.print(), 800);
 }
+
 
 // ── PropertyModal ─────────────────────────────────────────────────────────────
 function PropertyModal({ prop, onSave, onClose }) {
@@ -755,6 +905,11 @@ function PropertyModal({ prop, onSave, onClose }) {
                   <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
                 ))}
               </div>
+              {form.certEnergetico && !["En trámite","No indicado",""].includes(form.certEnergetico) && CERT_DESC[form.certEnergetico] && (
+                <div style={{ fontSize: 11, color: CERT_COLORS[form.certEnergetico], background: CERT_COLORS[form.certEnergetico] + "11", border: `1px solid ${CERT_COLORS[form.certEnergetico]}33`, borderRadius: 6, padding: "8px 11px", marginTop: 4, lineHeight: 1.5 }}>
+                  <strong>Calificación {form.certEnergetico}:</strong> {CERT_DESC[form.certEnergetico]}
+                </div>
+              )}
               {form.certEnergetico === "Sí" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px", background: "var(--dim)", borderRadius: 8, border: "1px solid var(--border)" }}>
                   {[["consumoEnergetico","Consumo energético","kWh/m²"],["emisionesEnergetico","Emisiones CO₂","kg CO₂/m²"]].map(([key, lbl, unit]) => (
@@ -789,7 +944,22 @@ function PropertyModal({ prop, onSave, onClose }) {
               <div style={{ marginTop: 8 }}>{txtField("URL del anuncio", "url", "https://idealista.com/…")}</div>
 
               <div className="sec">Estado</div>
-              <Toggle val={form.enviadaLaure} onChange={v => s("enviadaLaure", v)} label="✉ Enviada a Laure" />
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Toggle val={form.enviadaLaure} onChange={v => s("enviadaLaure", v)} label="✉ Enviada a Laure" />
+                <Toggle val={form.visitada} onChange={v => s("visitada", v)} label="🏠 Visitada" />
+              </div>
+              {form.visitada && (
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 8 }}>
+                  <div>
+                    <label className="label">Fecha de visita</label>
+                    <input type="date" value={form.fechaVisita || ""} onChange={e => s("fechaVisita", e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="label">Persona que la enseñó</label>
+                    <input type="text" value={form.personaVisita || ""} onChange={e => s("personaVisita", e.target.value)} placeholder="Nombre del agente…" />
+                  </div>
+                </div>
+              )}
 
               <div className="sec">Notas</div>
               <textarea value={form.notes} onChange={e => s("notes", e.target.value)} placeholder="Observaciones, pros, contras…" style={{ minHeight: 70, resize: "vertical" }} />
@@ -1006,7 +1176,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                         const total = scores[pi].pts;
                         const isWinner = p === winner;
                         return (
-                          <td key={p.id} style={{ padding: "9px 10px", fontWeight: 700, fontSize: 15, fontFamily: "Space Grotesk,sans-serif", color: isWinner ? "var(--green)" : scoreColor(total) }}>
+                          <td key={p.id} style={{ padding: "9px 10px", fontWeight: 700, fontSize: 15, fontFamily: "Outfit,sans-serif", color: isWinner ? "var(--green)" : scoreColor(total) }}>
                             {total} / 100 {isWinner ? "🏆" : ""}
                           </td>
                         );
@@ -1058,7 +1228,8 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 14 }}>
             <div style={{ flex: 1 }}>
               <div style={{ display: "flex", gap: 5, marginBottom: 7, flexWrap: "wrap" }}>
-                {prop.tipoInmueble && <span className="tag tag-blue">{prop.tipoInmueble}</span>}
+                {prop.visitada && <span className="tag tag-green">🏠 Visitada{prop.fechaVisita ? " · " + new Date(prop.fechaVisita).toLocaleDateString("es-ES") : ""}</span>}
+              {prop.tipoInmueble && <span className="tag tag-blue">{prop.tipoInmueble}</span>}
                 {prop.planta && <span className="tag">{prop.planta}</span>}
                 {prop.zone && <span className="tag">{prop.zone}</span>}
               </div>
@@ -1077,13 +1248,13 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
           <div style={{ background: "var(--dim)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>
+                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>
                   {prop.price ? Number(prop.price).toLocaleString("es-ES") + " €" : "—"}
                 </div>
                 <div style={{ fontSize: 13, color: "var(--inkMid)", marginTop: 4, fontWeight: 500 }}>{ratio}</div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
+                <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
                   {prop.comunidad > 0 ? prop.comunidad + " €" : "?"}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>comunidad/mes</div>
@@ -1124,10 +1295,17 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
             <Cell label="Año construcción" val={prop.anoConstruccion > 1900 ? prop.anoConstruccion : null} />
             <Cell label="Antigüedad" val={antiguedad != null ? antiguedad + " años" : null} />
             {prop.certEnergetico ? (
-              <div className="dcell">
-                <div className="dcell-l">Cert. energético</div>
-                <div className="dcell-v">{prop.certEnergetico}</div>
-              </div>
+              <>
+                <div className="dcell" style={{ gridColumn: "1 / -1" }}>
+                  <div className="dcell-l">Cert. energético</div>
+                  <div className="dcell-v" style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    <span style={{ fontWeight: 700, color: CERT_COLORS[prop.certEnergetico] || "var(--ink)", fontSize: 15 }}>{prop.certEnergetico}</span>
+                    {CERT_DESC[prop.certEnergetico] && (
+                      <span style={{ fontSize: 11, color: "var(--inkDim)", fontWeight: 400, lineHeight: 1.4 }}>{CERT_DESC[prop.certEnergetico]}</span>
+                    )}
+                  </div>
+                </div>
+              </>
             ) : null}
             {prop.consumoEnergetico ? (
               <div className="dcell">
@@ -1150,6 +1328,14 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete, onToggleLa
               </div>
             ) : null}
             <Cell label="Inmobiliaria" val={prop.inmobiliaria} />
+            {prop.visitada && <>
+              <div className="dcell">
+                <div className="dcell-l">Visita</div>
+                <div className="dcell-v" style={{ color: "var(--green)", fontWeight: 600 }}>✓ Visitada</div>
+              </div>
+              {prop.fechaVisita && <Cell label="Fecha visita" val={new Date(prop.fechaVisita).toLocaleDateString("es-ES")} />}
+              {prop.personaVisita && <Cell label="Enseñada por" val={prop.personaVisita} />}
+            </>}
           </div>
 
           {/* Tags */}
@@ -1286,6 +1472,9 @@ export default function App() {
       lavadero: !!form.lavadero,
       enviadaLaure: !!form.enviadaLaure,
       sold: !!form.sold,
+      visitada: !!form.visitada,
+      fechaVisita: form.fechaVisita || "",
+      personaVisita: form.personaVisita || "",
       photos: form.photos || [],
     };
     delete p.id;
@@ -1352,7 +1541,7 @@ export default function App() {
   const avgPrice = props.length ? Math.round(props.reduce((a, b) => a + (b.price || 0), 0) / props.length) : 0;
 
   if (!loaded) return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--inkDim)", fontFamily: "Inter,sans-serif" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--inkDim)", fontFamily: "Outfit,sans-serif" }}>
       <div className="pulse" style={{ fontSize: 12, letterSpacing: "0.1em", textTransform: "uppercase" }}>Conectando</div>
     </div>
   );
@@ -1404,7 +1593,7 @@ export default function App() {
         ].map(([l, v]) => (
           <div key={l} className="stat-item">
             <div style={{ fontSize: 10, color: "var(--inkFaint)", letterSpacing: "0.07em", textTransform: "uppercase" }}>{l}</div>
-            <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "Space Grotesk,sans-serif", marginTop: 2 }}>{v}</div>
+            <div style={{ fontSize: 17, fontWeight: 600, fontFamily: "Outfit,sans-serif", marginTop: 2 }}>{v}</div>
           </div>
         ))}
       </div>
@@ -1434,11 +1623,11 @@ export default function App() {
                 </div>
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>
+                    <div style={{ fontSize: 19, fontWeight: 700, fontFamily: "Outfit,sans-serif", letterSpacing: "-0.01em", lineHeight: 1 }}>
                       {p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "Space Grotesk,sans-serif", color: comunidadColor(p.comunidad), lineHeight: 1 }}>
+                      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(p.comunidad), lineHeight: 1 }}>
                         {p.comunidad > 0 ? p.comunidad + " €" : "?"}
                       </div>
                       <div style={{ fontSize: 9, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 1 }}>comunidad</div>
@@ -1485,7 +1674,7 @@ export default function App() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.enviadaLaure ? "var(--green)" : "var(--inkFaint)", fontWeight: 500, cursor: "pointer" }}
                     onClick={e => { e.stopPropagation(); toggleLaure(p.id); }}>
-                    {p.enviadaLaure ? "✉ Enviada a Laure" : "✉ Pendiente Laure"}
+                    {p.visitada ? "🏠 Visitada" + (p.fechaVisita ? " · " + new Date(p.fechaVisita).toLocaleDateString("es-ES") : "") : ""}{p.visitada && p.enviadaLaure ? " · " : ""}{p.enviadaLaure ? "✉ Laure" : !p.visitada ? "✉ Pendiente Laure" : ""}
                   </span>
                   <div style={{ display: "flex", gap: 4 }}>
                     <button className={`sold-btn ${p.sold ? "issold" : "unsold"}`}
