@@ -295,6 +295,12 @@ const css = `
   .sold-btn.unsold{background:transparent;color:var(--inkFaint);border-color:var(--border)}
   .sold-btn.unsold:hover{color:var(--red);border-color:var(--red)}
   .sold-btn.issold{background:#fef2f2;color:var(--red);border-color:#fccfcf}
+  .descartada-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);z-index:3;border-radius:10px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .descartada-label{color:white;font-size:22px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border:3px solid white;padding:6px 18px;border-radius:6px;transform:rotate(-8deg);opacity:0.92}
+  .desc-btn{font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;border:1.5px solid;cursor:pointer;transition:all 0.15s;line-height:1}
+  .desc-btn.nodesc{background:transparent;color:var(--inkFaint);border-color:var(--border)}
+  .desc-btn.nodesc:hover{color:#8a5c00;border-color:#8a5c00}
+  .desc-btn.isdesc{background:#fdf6e3;color:#8a5c00;border-color:#e8d598}
 `;
 
 // ── ScoreRing ─────────────────────────────────────────────────────────────────
@@ -621,7 +627,7 @@ function PropertyModal({ prop, onSave, onClose }) {
     piscina: false, aireCond: false, ascensor: false, jardin: false, amueblado: false, lavadero: false,
     soleria: "", certEnergetico: "", consumoEnergetico: 0, emisionesEnergetico: 0,
     estadoBanos: "", estadoCocina: "", cocinaPositivos: [], cocinaNegativos: [], tipoAire: "",
-    visitada: false, fechaVisita: "", personaVisita: "", otrosPros: "", otrosContras: "",
+    visitada: false, fechaVisita: "", personaVisita: "", otrosPros: "", otrosContras: "", descartada: false,
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, vrc: 0, inmobiliaria: "", notes: "",
     enviadaLaure: false, photos: [],
@@ -919,8 +925,8 @@ function PropertyModal({ prop, onSave, onClose }) {
               </div>
 
               <div className="sec">Certificado energético</div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, padding: !form.certEnergetico ? "10px" : "0", border: !form.certEnergetico ? "2.5px solid var(--red)" : "none", borderRadius: !form.certEnergetico ? "8px" : "0", background: !form.certEnergetico ? "#fef2f2" : "transparent" }}>
-                {!form.certEnergetico && <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 500, marginBottom: 8, display: "block", width: "100%" }}>⚠ Sin certificado energético indicado</span>}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8, padding: (!form.certEnergetico || ["No indicado","En trámite"].includes(form.certEnergetico)) ? "10px" : "0", border: (!form.certEnergetico || ["No indicado","En trámite"].includes(form.certEnergetico)) ? "2.5px solid var(--red)" : "none", borderRadius: (!form.certEnergetico || ["No indicado","En trámite"].includes(form.certEnergetico)) ? "8px" : "0", background: (!form.certEnergetico || ["No indicado","En trámite"].includes(form.certEnergetico)) ? "#fef2f2" : "transparent" }}>
+                {(!form.certEnergetico || ["No indicado","En trámite"].includes(form.certEnergetico)) && <span style={{ fontSize: 12, color: "var(--red)", fontWeight: 500, marginBottom: 8, display: "block", width: "100%" }}>⚠ Sin certificado energético indicado</span>}
                 {["Sí","En trámite","No indicado"].map(v => (
                   <Toggle key={v} val={form.certEnergetico === v} onChange={() => s("certEnergetico", form.certEnergetico === v ? "" : v)} label={v} />
                 ))}
@@ -1254,6 +1260,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
               </div>
               <h2 style={{ fontSize: 18, lineHeight: 1.3, marginBottom: 3 }}>
                 {prop.sold && <span style={{ display: "inline-block", background: "#fef2f2", color: "var(--red)", border: "1.5px solid #fccfcf", borderRadius: 4, fontSize: 11, fontWeight: 700, padding: "1px 7px", letterSpacing: "0.08em", marginRight: 8, verticalAlign: "middle" }}>SOLD</span>}
+                {prop.descartada && <span style={{ display: "inline-block", background: "#fdf6e3", color: "#8a5c00", border: "1.5px solid #e8d598", borderRadius: 4, fontSize: 11, fontWeight: 700, padding: "1px 7px", letterSpacing: "0.08em", marginRight: 8, verticalAlign: "middle" }}>DESCARTADA</span>}
                 {prop.title}
               </h2>
               {prop.address && <div style={{ fontSize: 12, color: "var(--inkDim)" }}>{prop.address}</div>}
@@ -1325,10 +1332,11 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : null}
+            {(!prop.certEnergetico || ["No indicado","En trámite"].includes(prop.certEnergetico)) && (
               <div className="dcell" style={{ borderLeft: "3px solid var(--red)", background: "#fef2f2" }}>
                 <div className="dcell-l" style={{ color: "var(--red)" }}>Cert. energético</div>
-                <div className="dcell-v" style={{ color: "var(--red)", fontWeight: 600 }}>⚠ No indicado</div>
+                <div className="dcell-v" style={{ color: "var(--red)", fontWeight: 600 }}>⚠ {prop.certEnergetico || "No indicado"}</div>
               </div>
             )}
             {prop.consumoEnergetico ? (
@@ -1495,6 +1503,7 @@ export default function App() {
       lavadero: !!form.lavadero,
       enviadaLaure: !!form.enviadaLaure,
       sold: !!form.sold,
+      descartada: !!form.descartada,
       visitada: !!form.visitada,
       otrosPros: form.otrosPros || "",
       otrosContras: form.otrosContras || "",
@@ -1528,6 +1537,13 @@ export default function App() {
 
   const deleteProperty = async (id) => { await deleteDoc(doc(db, "properties", id)); };
   const saveCriteria = async (nc) => { await setDoc(doc(db, "config", "criteria"), { list: nc }); setCriteria(nc); };
+  const toggleDescartada = async (id) => {
+    const prop = props.find(p => p.id === id); if (!prop) return;
+    const updated = { ...prop, descartada: !prop.descartada }; delete updated.id;
+    const clean = (obj) => { const out = {}; Object.entries(obj).forEach(([k,v]) => { if(v===undefined)return; if(Array.isArray(v))out[k]=v.filter(x=>x!==undefined); else out[k]=v; }); return out; };
+    await setDoc(doc(db, "properties", id), JSON.parse(JSON.stringify(clean(updated))));
+  };
+
   const toggleSold = async (id) => {
     const prop = props.find(p => p.id === id); if (!prop) return;
     const updated = { ...prop, sold: !prop.sold }; delete updated.id;
@@ -1630,9 +1646,10 @@ export default function App() {
           const m2 = p.sizeUtil || p.sizeConstruida || 0;
           const ratio = m2 && p.price ? Math.round(p.price / m2).toLocaleString("es-ES") + " €/m²" : "";
           return (
-            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold ? 0.7 : 1 }} onClick={() => setDetail(p)}>
+            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold || p.descartada ? 0.7 : 1 }} onClick={() => setDetail(p)}>
               <div className="rank-num">#{rank}</div>
               {p.sold && <div className="sold-overlay"><div className="sold-x"/></div>}
+              {p.descartada && !p.sold && <div className="descartada-overlay"><div className="descartada-label">Descartada</div></div>}
               {photos.length > 0 && (
                 <div onClick={e => e.stopPropagation()}>
                   <Carousel photos={photos} height={110} radius="10px 10px 0 0" />
@@ -1678,7 +1695,7 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                  {!p.certEnergetico && <span className="tag" title="Sin certificado energético" style={{ background:"#fef2f2", borderColor:"var(--red)", borderWidth:2, color:"var(--red)", fontWeight:600 }}>⚠ Sin cert.</span>}
+                  {(!p.certEnergetico || ["No indicado","En trámite"].includes(p.certEnergetico)) && <span className="tag" title="Sin certificado energético" style={{ background:"#fef2f2", borderColor:"var(--red)", borderWidth:2, color:"var(--red)", fontWeight:600 }}>⚠ Sin cert.</span>}
                   {p.tipoInmueble && <span className="tag tag-blue" title={p.tipoInmueble}>{p.tipoInmueble}</span>}
                   {p.planta && <span className="tag" title={"Planta: " + p.planta}>{p.planta}</span>}
                   {[
@@ -1705,6 +1722,10 @@ export default function App() {
                     <button className={`sold-btn ${p.sold ? "issold" : "unsold"}`}
                       onClick={e => { e.stopPropagation(); toggleSold(p.id); }}>
                       {p.sold ? "✕ SOLD" : "SOLD"}
+                    </button>
+                    <button className={`desc-btn ${p.descartada ? "isdesc" : "nodesc"}`}
+                      onClick={e => { e.stopPropagation(); toggleDescartada(p.id); }}>
+                      {p.descartada ? "✕ DESC." : "DESC."}
                     </button>
                     <button className="print-ico btn btn-ghost btn-sm" onClick={e => { e.stopPropagation(); printPDF(p, p.pts, rank); }}
                       style={{ padding: "3px 8px", fontSize: 12 }}>🖨</button>
