@@ -467,6 +467,45 @@ function printPDF(prop, pts, rank) {
   const mainPhoto = (prop.photos || [])[0] || "";
   const restPhotos = (prop.photos || []).slice(1);
 
+  // Calculator block
+  const calcBlock = (() => {
+    if (!prop.price) return "";
+    const precio = prop.price || 0;
+    const vrc = prop.vrc || 0;
+    const base = Math.max(precio, vrc);
+    const itp = Math.round(base * 0.07);
+    const notaria = 800, registro = 500, gestoria = 400, tasacion = 400, suministros = 200;
+    const totalExtra = itp + notaria + registro + gestoria + tasacion + suministros;
+    const costeTotal = precio + totalExtra;
+    const ahorros = 50000;
+    const capital = Math.min(Math.max(0, costeTotal - ahorros), precio * 0.8);
+    const i = 0.032 / 12, n = 240;
+    const cuota = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,n)) / (Math.pow(1+i,n)-1)) : 0;
+    const esfuerzo = cuota + Math.round(900/12) + Math.round(((prop.ibi||0) + (prop.comunidad||0)*12) / 12);
+    const fmtC = x => x.toLocaleString("es-ES") + " €";
+    const itpRow = vrc > precio
+      ? "<tr style=\"border-bottom:1px solid #eee;background:#fef2f2\"><td style=\"padding:5px 8px;color:#991b1b\">ITP real (s/ VRC " + fmtC(vrc) + ")</td><td style=\"padding:5px 8px;text-align:right;font-weight:600;color:#991b1b\">" + fmtC(itp) + "</td></tr>"
+      : "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">ITP (7% s/ precio)</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(itp) + "</td></tr>";
+    return "<div style=\"margin-top:24px;border-top:2px solid #111;padding-top:16px\">"
+      + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 20 años, 3,2%)</div>"
+      + "<table style=\"width:100%;border-collapse:collapse;font-size:12px\">"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Precio de compraventa</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(precio) + "</td></tr>"
+      + itpRow
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Notaría</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(notaria) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Registro</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(registro) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Gestoría</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(gestoria) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Tasación</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(tasacion) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Suministros</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(suministros) + "</td></tr>"
+      + "<tr style=\"border-bottom:2px solid #111;font-weight:700\"><td style=\"padding:7px 8px\">Coste total operación</td><td style=\"padding:7px 8px;text-align:right\">" + fmtC(costeTotal) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Ahorros aportados (estimado)</td><td style=\"padding:5px 8px;text-align:right\">-" + fmtC(ahorros) + "</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Capital hipoteca estimado (80% LTV)</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(capital) + "</td></tr>"
+      + "<tr style=\"background:#f8f8f6;font-weight:700\"><td style=\"padding:7px 8px\">Cuota hipoteca estimada (20 años · 3,2%)</td><td style=\"padding:7px 8px;text-align:right;font-size:15px\">" + fmtC(cuota) + "/mes</td></tr>"
+      + "<tr style=\"background:#f0f0ee\"><td style=\"padding:5px 8px;color:#555\">Esfuerzo mensual real</td><td style=\"padding:5px 8px;text-align:right;font-weight:600\">" + fmtC(esfuerzo) + "/mes</td></tr>"
+      + "</table>"
+      + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados 900€/año. Ahorros asumidos 50.000€. Consulta tu banco para condiciones reales.</div>"
+      + "</div>";
+  })();
+
   w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title || "Propiedad"}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -613,47 +652,7 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
 
-  ${(() => {
-    if (!prop.price) return "";
-    const precio = prop.price || 0;
-    const vrc = prop.vrc || 0;
-    const base = Math.max(precio, vrc);
-    const itp = Math.round(base * 0.07);
-    const notaria = 800, registro = 500, gestoria = 400, tasacion = 400, suministros = 200;
-    const gastosForm = notaria + registro + gestoria + suministros;
-    const totalExtra = itp + gastosForm + tasacion;
-    const costeTotal = precio + totalExtra;
-    const ahorros = 50000; // default
-    const ltv = 0.80;
-    const maxPrestamo = precio * ltv;
-    const capital = Math.min(Math.max(0, costeTotal - ahorros), maxPrestamo);
-    const i = 0.032 / 12;
-    const n = 20 * 12;
-    const cuota = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,n)) / (Math.pow(1+i,n)-1)) : 0;
-    const comunidadAnual = (prop.comunidad || 0) * 12;
-    const ibiAnual = prop.ibi || 0;
-    const segurosMensual = Math.round((300 + 600) / 12);
-    const esfuerzo = cuota + segurosMensual + Math.round((ibiAnual + comunidadAnual) / 12);
-    return \`
-    <div style="margin-top:24px;border-top:2px solid #111;padding-top:16px">
-      <div style="font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px">Estimación de costes de compra · Valores orientativos (ITP 7%, LTV 80%, 20 años, 3,2%)</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px">
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Precio de compraventa</td><td style="padding:5px 8px;text-align:right;font-weight:500">\${precio.toLocaleString("es-ES")} €</td></tr>
-        \${vrc > precio ? \`<tr style="border-bottom:1px solid #eee;background:#fef2f2"><td style="padding:5px 8px;color:#991b1b">ITP real (s/ VRC \${vrc.toLocaleString("es-ES")} €)</td><td style="padding:5px 8px;text-align:right;font-weight:600;color:#991b1b">\${itp.toLocaleString("es-ES")} €</td></tr>\` : \`<tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">ITP (7% s/ precio)</td><td style="padding:5px 8px;text-align:right;font-weight:500">\${itp.toLocaleString("es-ES")} €</td></tr>\`}
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Notaría</td><td style="padding:5px 8px;text-align:right">\${notaria.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Registro de la Propiedad</td><td style="padding:5px 8px;text-align:right">\${registro.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Gestoría</td><td style="padding:5px 8px;text-align:right">\${gestoria.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Tasación</td><td style="padding:5px 8px;text-align:right">\${tasacion.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Alta de suministros</td><td style="padding:5px 8px;text-align:right">\${suministros.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:2px solid #111;font-weight:700"><td style="padding:7px 8px">Coste total de la operación</td><td style="padding:7px 8px;text-align:right">\${costeTotal.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Ahorros aportados (estimado)</td><td style="padding:5px 8px;text-align:right">-\${ahorros.toLocaleString("es-ES")} €</td></tr>
-        <tr style="border-bottom:1px solid #eee"><td style="padding:5px 8px;color:#888">Capital hipoteca estimado (80% LTV)</td><td style="padding:5px 8px;text-align:right">\${capital.toLocaleString("es-ES")} €</td></tr>
-        <tr style="background:#f8f8f6;font-weight:700"><td style="padding:7px 8px">Cuota hipoteca estimada (20 años · 3,2%)</td><td style="padding:7px 8px;text-align:right;font-size:15px">\${cuota.toLocaleString("es-ES")} €/mes</td></tr>
-        <tr style="background:#f0f0ee"><td style="padding:5px 8px;color:#555">Esfuerzo mensual real (cuota + seguros + IBI + comunidad)</td><td style="padding:5px 8px;text-align:right;font-weight:600">\${esfuerzo.toLocaleString("es-ES")} €/mes</td></tr>
-      </table>
-      <div style="font-size:10px;color:#aaa;margin-top:8px;line-height:1.4">Cálculo orientativo. Notaría/registro/gestoría son estimaciones. Los seguros se estiman en 300€/año (hogar) + 600€/año (vida). Ahorros asumidos: 50.000€. Consulta tu banco para condiciones reales.</div>
-    </div>\`;
-  })()}
+  ${calcBlock}
 
   </body></html>`);
   w.document.close();
