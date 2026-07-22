@@ -596,7 +596,7 @@ function printPDF(prop, pts, rank) {
     .gallery img{width:100%;height:50px;object-fit:cover;border-radius:3px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
-    .pg1{page-break-after:always!important;break-after:page!important} .pg2{page-break-before:always!important;break-before:page!important} @media print{body{padding:10px 14px}}
+    .pg1{page-break-after:always!important;break-after:page!important;overflow:hidden} .pg2{page-break-before:always!important;break-before:page!important} @media print{body{padding:10px 14px} .pg1{height:257mm;overflow:hidden}}
   </style></head><body>
   <div class="pg1">
   <div class="header">
