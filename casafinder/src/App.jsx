@@ -710,8 +710,11 @@ function PropertyModal({ prop, onSave, onClose }) {
   const numField = (lbl, key, unit = "") => (
     <div>
       <label className="label">{lbl}{unit && <span style={{ color: "var(--inkFaint)", fontWeight: 400 }}> ({unit})</span>}</label>
-      <input type="number" min="0" value={form[key] ?? 0}
+      <input type="number" min="0"
+        value={form[key] === 0 ? "" : (form[key] ?? "")}
+        placeholder="0"
         onChange={e => n(key, e.target.value)}
+        onBlur={e => { if (e.target.value === "") n(key, 0); }}
         onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }} />
     </div>
   );
@@ -802,13 +805,17 @@ function PropertyModal({ prop, onSave, onClose }) {
               {row2(<>
                 <div>
                   <label className="label">M² útiles</label>
-                  <input type="number" min="0" value={form.sizeUtil ?? 0}
+                  <input type="number" min="0"
+                    value={form.sizeUtil === 0 ? "" : (form.sizeUtil ?? "")}
+                    placeholder="0"
                     onChange={e => { const v = Number(e.target.value) || 0; setForm(f => ({ ...f, sizeUtil: v, sizeConstruida: v > 0 ? Math.round(v * 1.2) : f.sizeConstruida })); }}
                     onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }}/>
                 </div>
                 <div>
                   <label className="label">M² construidos</label>
-                  <input type="number" min="0" value={form.sizeConstruida ?? 0}
+                  <input type="number" min="0"
+                    value={form.sizeConstruida === 0 ? "" : (form.sizeConstruida ?? "")}
+                    placeholder="0"
                     onChange={e => { const v = Number(e.target.value) || 0; setForm(f => ({ ...f, sizeConstruida: v, sizeUtil: v > 0 ? Math.round(v * 0.8) : f.sizeUtil })); }}
                     onFocus={e => { if (Number(e.target.value) === 0) e.target.select(); }}/>
                 </div>
