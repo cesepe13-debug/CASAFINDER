@@ -498,7 +498,7 @@ function printPDF(prop, pts, rank) {
     const itpRow = vrc > precio
       ? "<tr style=\"border-bottom:1px solid #eee;background:#fef2f2\"><td style=\"padding:5px 8px;color:#991b1b\">ITP real (s/ VRC " + fmtC(vrc) + ")</td><td style=\"padding:5px 8px;text-align:right;font-weight:600;color:#991b1b\">" + fmtC(itp) + "</td></tr>"
       : "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">ITP (7% s/ precio)</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(itp) + "</td></tr>";
-    return "<div style=\"margin-top:24px;border-top:2px solid #111;padding-top:16px\">"
+    return "<div style=\"page-break-before:always;margin-top:0;padding-top:24px\">"
       + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 3,2%)</div>"
       + "<table style=\"width:100%;border-collapse:collapse;font-size:12px\">"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Precio de compraventa</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(precio) + "</td></tr>"
@@ -689,7 +689,6 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
 
-  <div style="page-break-before:always"></div>
   ${calcBlock}
 
   </body></html>`);
