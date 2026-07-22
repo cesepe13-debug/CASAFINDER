@@ -481,13 +481,20 @@ function printPDF(prop, pts, rank) {
     const capital = Math.min(Math.max(0, costeTotal - ahorros), precio * 0.8);
     const i = 0.032 / 12, n = 240;
     const cuota = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,n)) / (Math.pow(1+i,n)-1)) : 0;
-    const esfuerzo = cuota + Math.round(900/12) + Math.round(((prop.ibi||0) + (prop.comunidad||0)*12) / 12);
     const fmtC = x => x.toLocaleString("es-ES") + " €";
+    const i = 0.032 / 12;
+    const cuota20 = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,240)) / (Math.pow(1+i,240)-1)) : 0;
+    const cuota15 = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,180)) / (Math.pow(1+i,180)-1)) : 0;
+    const segurosMes = Math.round(900 / 12);
+    const ibiMes = Math.round((prop.ibi || 0) / 12);
+    const comunidadMes = prop.comunidad || 0;
+    const esfuerzo20 = cuota20 + segurosMes + ibiMes + comunidadMes;
+    const esfuerzo15 = cuota15 + segurosMes + ibiMes + comunidadMes;
     const itpRow = vrc > precio
       ? "<tr style=\"border-bottom:1px solid #eee;background:#fef2f2\"><td style=\"padding:5px 8px;color:#991b1b\">ITP real (s/ VRC " + fmtC(vrc) + ")</td><td style=\"padding:5px 8px;text-align:right;font-weight:600;color:#991b1b\">" + fmtC(itp) + "</td></tr>"
       : "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">ITP (7% s/ precio)</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(itp) + "</td></tr>";
     return "<div style=\"margin-top:24px;border-top:2px solid #111;padding-top:16px\">"
-      + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 20 años, 3,2%)</div>"
+      + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 3,2%)</div>"
       + "<table style=\"width:100%;border-collapse:collapse;font-size:12px\">"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Precio de compraventa</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(precio) + "</td></tr>"
       + itpRow
@@ -497,12 +504,22 @@ function printPDF(prop, pts, rank) {
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Tasación</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(tasacion) + "</td></tr>"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Suministros</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(suministros) + "</td></tr>"
       + "<tr style=\"border-bottom:2px solid #111;font-weight:700\"><td style=\"padding:7px 8px\">Coste total operación</td><td style=\"padding:7px 8px;text-align:right\">" + fmtC(costeTotal) + "</td></tr>"
-      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Ahorros aportados (estimado)</td><td style=\"padding:5px 8px;text-align:right\">-" + fmtC(ahorros) + "</td></tr>"
-      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Capital hipoteca estimado (80% LTV)</td><td style=\"padding:5px 8px;text-align:right\">" + fmtC(capital) + "</td></tr>"
-      + "<tr style=\"background:#f8f8f6;font-weight:700\"><td style=\"padding:7px 8px\">Cuota hipoteca estimada (20 años · 3,2%)</td><td style=\"padding:7px 8px;text-align:right;font-size:15px\">" + fmtC(cuota) + "/mes</td></tr>"
-      + "<tr style=\"background:#f0f0ee\"><td style=\"padding:5px 8px;color:#555\">Esfuerzo mensual real</td><td style=\"padding:5px 8px;text-align:right;font-weight:600\">" + fmtC(esfuerzo) + "/mes</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Ahorros aportados</td><td style=\"padding:5px 8px;text-align:right\">-" + fmtC(ahorros) + "</td></tr>"
+      + "<tr style=\"border-bottom:2px solid #111\"><td style=\"padding:5px 8px;color:#888\">Capital hipoteca estimado (80% LTV)</td><td style=\"padding:5px 8px;text-align:right;font-weight:600\">" + fmtC(capital) + "</td></tr>"
+      + "<tr style=\"background:#f0f7ff\"><td colspan=\"2\" style=\"padding:6px 8px;font-size:10px;font-weight:700;color:#1d3f7a;text-transform:uppercase;letter-spacing:0.06em\">Escenario 20 años</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee;background:#f8f8f6;font-weight:700\"><td style=\"padding:6px 8px\">Cuota hipoteca (20 años · 3,2%)</td><td style=\"padding:6px 8px;text-align:right;font-size:15px\">" + fmtC(cuota20) + "/mes</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Seguros hogar + vida (est.)</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(segurosMes) + "/mes</td></tr>"
+      + (ibiMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(ibiMes) + "/mes</td></tr>" : "")
+      + (comunidadMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(comunidadMes) + "/mes</td></tr>" : "")
+      + "<tr style=\"background:#e8f0ff;font-weight:700;border-bottom:2px solid #111\"><td style=\"padding:7px 8px\">Esfuerzo mensual real (20 años)</td><td style=\"padding:7px 8px;text-align:right;font-size:14px;color:#1d3f7a\">" + fmtC(esfuerzo20) + "/mes</td></tr>"
+      + "<tr style=\"background:#f0f7ff\"><td colspan=\"2\" style=\"padding:6px 8px;font-size:10px;font-weight:700;color:#1d3f7a;text-transform:uppercase;letter-spacing:0.06em\">Escenario 15 años</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee;background:#f8f8f6;font-weight:700\"><td style=\"padding:6px 8px\">Cuota hipoteca (15 años · 3,2%)</td><td style=\"padding:6px 8px;text-align:right;font-size:15px\">" + fmtC(cuota15) + "/mes</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Seguros hogar + vida (est.)</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(segurosMes) + "/mes</td></tr>"
+      + (ibiMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(ibiMes) + "/mes</td></tr>" : "")
+      + (comunidadMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(comunidadMes) + "/mes</td></tr>" : "")
+      + "<tr style=\"background:#e8f0ff;font-weight:700\"><td style=\"padding:7px 8px\">Esfuerzo mensual real (15 años)</td><td style=\"padding:7px 8px;text-align:right;font-size:14px;color:#1d3f7a\">" + fmtC(esfuerzo15) + "/mes</td></tr>"
       + "</table>"
-      + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados 900€/año. Ahorros asumidos 50.000€. Consulta tu banco para condiciones reales.</div>"
+      + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
 
