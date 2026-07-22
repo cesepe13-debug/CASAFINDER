@@ -538,6 +538,25 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#f8f8f0\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 15 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct15) + "\">" + pct15 + "%</span> <span style=\"font-size:11px;color:" + color(pct15) + "\">" + label(pct15) + "</span></td></tr>";
         })()
       + "</table>"
+      + (() => {
+          const objetivo = 2600 * 0.30;
+          const fnEsfuerzo = (p) => {
+            const itpP = Math.round(Math.max(p,0)*0.07);
+            const gastosP = itpP+800+500+400+400+200;
+            const costeP = p+gastosP;
+            const capP = Math.min(Math.max(0,costeP-200000),p*0.8);
+            const cuotaP = capP>0?capP*(i*Math.pow(1+i,240))/(Math.pow(1+i,240)-1):0;
+            return cuotaP+75+Math.round((prop.ibi||0)/12)+(prop.comunidad||0);
+          };
+          let lo=0,hi=precio*2;
+          for(let k=0;k<60;k++){const mid=(lo+hi)/2;if(fnEsfuerzo(mid)<objetivo)lo=mid;else hi=mid;}
+          const precioObj=Math.round((lo+hi)/2);
+          const rebaja=precio-precioObj;
+          const pctRebaja=Math.round((rebaja/precio)*100);
+          return "<tr style=\"background:#f8f8f0;border-top:2px solid #111\"><td colspan=\"2\" style=\"padding:8px 8px 4px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em\">Precio objetivo (esfuerzo 30% del sueldo)</td></tr>"
+            + "<tr style=\"background:#edf7f2\"><td style=\"padding:6px 8px;font-weight:700;color:#1a5c3a\">Precio para esfuerzo del 30%</td><td style=\"padding:6px 8px;text-align:right;font-size:17px;font-weight:700;color:#1a5c3a\">" + fmtC(precioObj) + "</td></tr>"
+            + "<tr style=\"background:#fef2f2\"><td style=\"padding:6px 8px;color:#991b1b;font-weight:600\">Rebaja necesaria</td><td style=\"padding:6px 8px;text-align:right;font-weight:700;color:#991b1b\">-" + fmtC(rebaja) + " (" + pctRebaja + "% de descuento)</td></tr>";
+        })()
       + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
@@ -596,9 +615,8 @@ function printPDF(prop, pts, rank) {
     .gallery img{width:100%;height:50px;object-fit:cover;border-radius:3px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
-    .pg1{page-break-after:always!important;break-after:page!important;overflow:hidden} .pg2{page-break-before:always!important;break-before:page!important} @media print{body{padding:10px 14px} .pg1{height:257mm;overflow:hidden}}
+    .page-2{page-break-before:always;break-before:page;padding-top:14px} @media print{body{padding:10px 14px} .page-2{page-break-before:always!important;break-before:page!important}}
   </style></head><body>
-  <div class="pg1">
   <div class="header">
     <div style="flex:1;padding-right:16px">
       <div class="logo">CasaFinder · Ficha de propiedad</div>
@@ -689,9 +707,7 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">${prop.url ? prop.url : ""}</div>
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
-  </div>
-
-  <div class="pg2">${calcBlock}</div>
+  <div class="page-2">${calcBlock}</div>
 
   </body></html>`);
   w.document.close();
