@@ -656,6 +656,7 @@ function printPDF(prop, pts, rank) {
           ${prop.personaVisita ? `<div class="dr"><div class="dl">Agente</div><div class="dv">${prop.personaVisita}</div></div>` : ""}
         ` : ""}
       </div>
+      ${certDesc ? `<div style="margin-top:8px;background:#f0f0ee;border-left:3px solid #888;padding:8px 12px;font-size:11px;color:#555;line-height:1.5"><strong>Calificación ${certKey}:</strong> ${certDesc}</div>` : ""}
     </div>
     <div>
       <div class="sec">Características</div>
