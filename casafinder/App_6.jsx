@@ -498,7 +498,7 @@ function printPDF(prop, pts, rank) {
     const itpRow = vrc > precio
       ? "<tr style=\"border-bottom:1px solid #eee;background:#fef2f2\"><td style=\"padding:5px 8px;color:#991b1b\">ITP real (s/ VRC " + fmtC(vrc) + ")</td><td style=\"padding:5px 8px;text-align:right;font-weight:600;color:#991b1b\">" + fmtC(itp) + "</td></tr>"
       : "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">ITP (7% s/ precio)</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(itp) + "</td></tr>";
-    return "<div class=\"page-break\" style=\"margin-top:0;padding-top:24px\">"
+    return "<div style=\"margin-top:0;padding-top:24px\">"
       + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 3,2%)</div>"
       + "<table style=\"width:100%;border-collapse:collapse;font-size:12px\">"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Precio de compraventa</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(precio) + "</td></tr>"
@@ -596,8 +596,9 @@ function printPDF(prop, pts, rank) {
     .gallery img{width:100%;height:50px;object-fit:cover;border-radius:3px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
-    @media print{body{padding:10px 14px} .page-break{page-break-before:always;break-before:page;display:block}}
+    @media print{body{padding:10px 14px} .pg1{page-break-after:always} .pg2{page-break-before:always}}
   </style></head><body>
+  <div class="pg1">
   <div class="header">
     <div style="flex:1;padding-right:16px">
       <div class="logo">CasaFinder · Ficha de propiedad</div>
@@ -688,8 +689,9 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">${prop.url ? prop.url : ""}</div>
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
+  </div>
 
-  ${calcBlock}
+  <div class="pg2">${calcBlock}</div>
 
   </body></html>`);
   w.document.close();
