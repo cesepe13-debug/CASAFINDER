@@ -695,7 +695,7 @@ function printPDF(prop, pts, rank) {
 
   </body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 800);
+  w.onload = () => { setTimeout(() => w.print(), 300); };
 }
 
 
