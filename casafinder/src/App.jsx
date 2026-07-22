@@ -479,8 +479,6 @@ function printPDF(prop, pts, rank) {
     const costeTotal = precio + totalExtra;
     const ahorros = 200000;
     const capital = Math.min(Math.max(0, costeTotal - ahorros), precio * 0.8);
-    const i = 0.032 / 12, n = 240;
-    const cuota = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,n)) / (Math.pow(1+i,n)-1)) : 0;
     const fmtC = x => x.toLocaleString("es-ES") + " €";
     const i = 0.032 / 12;
     const cuota20 = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,240)) / (Math.pow(1+i,240)-1)) : 0;
