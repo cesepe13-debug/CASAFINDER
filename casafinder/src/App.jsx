@@ -464,6 +464,7 @@ function printPDF(prop, pts, rank) {
   if (prop.garaje) pros.push("Tiene garaje");
   if ((prop.vistas || []).includes("Mar")) pros.unshift("Vistas al mar");
 
+  const certDesc = CERT_DESC[prop.certEnergetico] || null;
   const mainPhoto = (prop.photos || [])[0] || "";
   const restPhotos = (prop.photos || []).slice(1);
 
@@ -640,7 +641,7 @@ function printPDF(prop, pts, rank) {
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
           ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? prop.certEnergetico + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") : prop.certEnergetico],
-      ["Implicaciones cert.", CERT_DESC[prop.certEnergetico] || null],
+          ["Implicaciones cert.", certDesc],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
