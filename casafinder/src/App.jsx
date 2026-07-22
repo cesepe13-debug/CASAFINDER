@@ -640,6 +640,7 @@ function printPDF(prop, pts, rank) {
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
           ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? prop.certEnergetico + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") : prop.certEnergetico],
+      ["Implicaciones cert.", CERT_DESC[prop.certEnergetico] || null],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
