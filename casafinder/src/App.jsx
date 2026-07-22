@@ -477,7 +477,7 @@ function printPDF(prop, pts, rank) {
     const notaria = 800, registro = 500, gestoria = 400, tasacion = 400, suministros = 200;
     const totalExtra = itp + notaria + registro + gestoria + tasacion + suministros;
     const costeTotal = precio + totalExtra;
-    const ahorros = 50000;
+    const ahorros = 200000;
     const capital = Math.min(Math.max(0, costeTotal - ahorros), precio * 0.8);
     const i = 0.032 / 12, n = 240;
     const cuota = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,n)) / (Math.pow(1+i,n)-1)) : 0;
