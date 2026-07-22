@@ -465,6 +465,7 @@ function printPDF(prop, pts, rank) {
   if ((prop.vistas || []).includes("Mar")) pros.unshift("Vistas al mar");
 
   const certDesc = CERT_DESC[prop.certEnergetico] || null;
+  console.log('certEnergetico:', JSON.stringify(prop.certEnergetico), 'certDesc:', certDesc);
   const mainPhoto = (prop.photos || [])[0] || "";
   const restPhotos = (prop.photos || []).slice(1);
 
