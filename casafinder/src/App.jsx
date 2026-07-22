@@ -516,8 +516,22 @@ function printPDF(prop, pts, rank) {
       + (ibiMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(ibiMes) + "/mes</td></tr>" : "")
       + (comunidadMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(comunidadMes) + "/mes</td></tr>" : "")
       + "<tr style=\"background:#e8f0ff;font-weight:700\"><td style=\"padding:7px 8px\">Esfuerzo mensual real (15 años)</td><td style=\"padding:7px 8px;text-align:right;font-size:14px;color:#1d3f7a\">" + fmtC(esfuerzo15) + "/mes</td></tr>"
+      + (() => {
+          const sueldo = 2600;
+          const minSueldo20 = Math.round(esfuerzo20 / 0.35);
+          const minSueldo15 = Math.round(esfuerzo15 / 0.35);
+          const pct20 = Math.round((esfuerzo20 / sueldo) * 100);
+          const pct15 = Math.round((esfuerzo15 / sueldo) * 100);
+          const color = pct => pct <= 30 ? "#1a5c3a" : pct <= 35 ? "#e07b00" : pct <= 40 ? "#cc4400" : "#991b1b";
+          const label = pct => pct <= 30 ? "Cómodo" : pct <= 35 ? "Ajustado" : pct <= 40 ? "Elevado" : "Muy elevado";
+          return "<tr style=\"background:#f8f8f0;border-top:2px solid #111\"><td colspan=\"2\" style=\"padding:8px 8px 4px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em\">Análisis de esfuerzo (sueldo: 2.600 €/mes)</td></tr>"
+            + "<tr style=\"background:#f8f8f0\"><td style=\"padding:4px 8px;color:#555;font-size:12px\">Sueldo mínimo necesario (35%) · 20 años</td><td style=\"padding:4px 8px;text-align:right;font-size:12px;font-weight:500\">" + fmtC(minSueldo20) + "/mes</td></tr>"
+            + "<tr style=\"background:#f8f8f0\"><td style=\"padding:4px 8px 8px;color:#555;font-size:12px\">Sueldo mínimo necesario (35%) · 15 años</td><td style=\"padding:4px 8px 8px;text-align:right;font-size:12px;font-weight:500\">" + fmtC(minSueldo15) + "/mes</td></tr>"
+            + "<tr style=\"background:#f8f8f0;border-top:1px solid #e0e0dc\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 20 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct20) + "\">" + pct20 + "%</span> <span style=\"font-size:11px;color:" + color(pct20) + "\">" + label(pct20) + "</span></td></tr>"
+            + "<tr style=\"background:#f8f8f0\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 15 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct15) + "\">" + pct15 + "%</span> <span style=\"font-size:11px;color:" + color(pct15) + "\">" + label(pct15) + "</span></td></tr>";
+        })()
       + "</table>"
-      + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Consulta tu banco para condiciones reales.</div>"
+      + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
 
