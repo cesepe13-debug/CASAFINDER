@@ -464,7 +464,12 @@ function printPDF(prop, pts, rank) {
   if (prop.garaje) pros.push("Tiene garaje");
   if ((prop.vistas || []).includes("Mar")) pros.unshift("Vistas al mar");
 
-  const certKey = prop.certEnergetico ? prop.certEnergetico.trim().charAt(0).toUpperCase() : null;
+  // certEnergetico puede ser "Sí" (y la letra en consumoEnergetico) o directamente una letra A-G
+  const certLetras = ["A","B","C","D","E","F","G"];
+  const certKey = certLetras.includes(prop.certEnergetico) ? prop.certEnergetico
+    : certLetras.includes(prop.consumoEnergetico) ? prop.consumoEnergetico
+    : certLetras.includes(prop.emisionesEnergetico) ? prop.emisionesEnergetico
+    : null;
   const certDesc = certKey ? CERT_DESC[certKey] || null : null;
   const mainPhoto = (prop.photos || [])[0] || "";
   const restPhotos = (prop.photos || []).slice(1);
