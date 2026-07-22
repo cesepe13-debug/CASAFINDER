@@ -611,8 +611,8 @@ function printPDF(prop, pts, rank) {
     .contras li::before{content:"✗ ";font-weight:700;color:#991b1b}
     .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:6px;padding:7px 9px;font-size:10px;color:#555;line-height:1.5;margin-bottom:10px}
     .notes-t{font-size:9px;font-weight:700;color:#8a5c00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
-    .gallery{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px}
-    .gallery img{width:100%;height:50px;object-fit:cover;border-radius:3px}
+    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px}
+    .gallery img{width:100%;height:55px;object-fit:cover;border-radius:4px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
     .page-2{page-break-before:always;break-before:page;padding-top:14px} @media print{body{padding:10px 14px} .page-2{page-break-before:always!important;break-before:page!important}}
@@ -707,7 +707,7 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">${prop.url ? prop.url : ""}</div>
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
-  <div class="page-2">${calcBlock}</div>
+  <div class="page-2">${calcBlock || "<p style='font-size:12px;color:#aaa;padding:20px 0;'>Sin datos económicos introducidos.</p>"}</div>
 
   </body></html>`);
   w.document.close();
