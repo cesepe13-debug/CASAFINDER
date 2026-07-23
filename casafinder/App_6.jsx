@@ -540,7 +540,6 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#f8f8f0;border-top:1px solid #e0e0dc\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 20 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct20) + "\">" + pct20 + "%</span> <span style=\"font-size:11px;color:" + color(pct20) + "\">" + label(pct20) + "</span></td></tr>"
             + "<tr style=\"background:#f8f8f0\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 15 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct15) + "\">" + pct15 + "%</span> <span style=\"font-size:11px;color:" + color(pct15) + "\">" + label(pct15) + "</span></td></tr>";
         })()
-      + "</table>"
       + (() => {
           const objetivo = 2600 * 0.30;
           const iRate = 0.032/12;
@@ -561,6 +560,7 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#edf7f2\"><td style=\"padding:6px 8px;font-weight:700;color:#1a5c3a\">Precio para esfuerzo del 30%</td><td style=\"padding:6px 8px;text-align:right;font-size:17px;font-weight:700;color:#1a5c3a\">" + fmtC(precioObj) + "</td></tr>"
             + "<tr style=\"background:#fef2f2\"><td style=\"padding:6px 8px;color:#991b1b;font-weight:600\">Rebaja necesaria</td><td style=\"padding:6px 8px;text-align:right;font-weight:700;color:#991b1b\">-" + fmtC(rebaja) + " (" + pctRebaja + "% de descuento)</td></tr>";
         })()
+      + "</table>"
       + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
