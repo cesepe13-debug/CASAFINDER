@@ -438,10 +438,7 @@ function Lightbox({ src, photos, onClose }) {
 
 // ── Print PDF ─────────────────────────────────────────────────────────────────
 function printPDF(prop, pts, rank) {
-  const iframe = document.createElement('iframe');
-  iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:none';
-  document.body.appendChild(iframe);
-  const w = iframe.contentDocument;
+  const w = window.open("", "_blank");
   const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
   const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
   const base = Math.max(prop.price || 0, prop.vrc || 0);
@@ -565,8 +562,7 @@ function printPDF(prop, pts, rank) {
       + "</div>";
   })();
 
-  w.open();
-  w.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title || "Propiedad"}</title>
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${prop.title || "Propiedad"}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -715,14 +711,8 @@ function printPDF(prop, pts, rank) {
   <div style="page-break-before:always;break-before:page;padding-top:14px">${calcBlock || ""}</div>
 
   </body></html>`);
-  w.close();
-  iframe.onload = function() {
-    setTimeout(function() {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-      setTimeout(function() { document.body.removeChild(iframe); }, 1000);
-    }, 800);
-  };
+  w.document.close();
+  setTimeout(() => w.print(), 500);
 }
 
 
