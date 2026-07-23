@@ -543,12 +543,13 @@ function printPDF(prop, pts, rank) {
       + "</table>"
       + (() => {
           const objetivo = 2600 * 0.30;
+          const iRate = 0.032/12;
           const fnEsfuerzo = (p) => {
             const itpP = Math.round(Math.max(p,0)*0.07);
             const gastosP = itpP+800+500+400+400+200;
             const costeP = p+gastosP;
             const capP = Math.min(Math.max(0,costeP-200000),p*0.8);
-            const cuotaP = capP>0?capP*(i*Math.pow(1+i,240))/(Math.pow(1+i,240)-1):0;
+            const cuotaP = capP>0?capP*(iRate*Math.pow(1+iRate,240))/(Math.pow(1+iRate,240)-1):0;
             return cuotaP+75+Math.round((prop.ibi||0)/12)+(prop.comunidad||0);
           };
           let lo=0,hi=precio*2;
