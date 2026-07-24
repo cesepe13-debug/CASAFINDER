@@ -498,7 +498,7 @@ function printPDF(prop, pts, rank) {
     const itpRow = vrc > precio
       ? "<tr style=\"border-bottom:1px solid #eee;background:#fef2f2\"><td style=\"padding:5px 8px;color:#991b1b\">ITP real (s/ VRC " + fmtC(vrc) + ")</td><td style=\"padding:5px 8px;text-align:right;font-weight:600;color:#991b1b\">" + fmtC(itp) + "</td></tr>"
       : "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">ITP (7% s/ precio)</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(itp) + "</td></tr>";
-    return "<div style=\"margin-top:24px;border-top:2px solid #111;padding-top:16px\">"
+    return "<div style=\"margin-top:0;padding-top:24px\">"
       + "<div style=\"font-size:10px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px\">Estimación de costes de compra · Orientativo (ITP 7%, LTV 80%, 3,2%)</div>"
       + "<table style=\"width:100%;border-collapse:collapse;font-size:12px\">"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px;color:#888\">Precio de compraventa</td><td style=\"padding:5px 8px;text-align:right;font-weight:500\">" + fmtC(precio) + "</td></tr>"
@@ -536,6 +536,26 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#f8f8f0\"><td style=\"padding:4px 8px 8px;color:#555;font-size:12px\">Sueldo mínimo necesario (35%) · 15 años</td><td style=\"padding:4px 8px 8px;text-align:right;font-size:12px;font-weight:500\">" + fmtC(minSueldo15) + "/mes</td></tr>"
             + "<tr style=\"background:#f8f8f0;border-top:1px solid #e0e0dc\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 20 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct20) + "\">" + pct20 + "%</span> <span style=\"font-size:11px;color:" + color(pct20) + "\">" + label(pct20) + "</span></td></tr>"
             + "<tr style=\"background:#f8f8f0\"><td style=\"padding:6px 8px;font-size:12px;color:#555\">% esfuerzo real s/ tu sueldo · 15 años</td><td style=\"padding:6px 8px;text-align:right\"><span style=\"font-size:18px;font-weight:700;color:" + color(pct15) + "\">" + pct15 + "%</span> <span style=\"font-size:11px;color:" + color(pct15) + "\">" + label(pct15) + "</span></td></tr>";
+        })()
+      + (() => {
+          const objetivo = 2600 * 0.30;
+          const iRate = 0.032/12;
+          const fnEsfuerzo = (p) => {
+            const itpP = Math.round(Math.max(p,0)*0.07);
+            const gastosP = itpP+800+500+400+400+200;
+            const costeP = p+gastosP;
+            const capP = Math.min(Math.max(0,costeP-200000),p*0.8);
+            const cuotaP = capP>0?capP*(iRate*Math.pow(1+iRate,240))/(Math.pow(1+iRate,240)-1):0;
+            return cuotaP+75+Math.round((prop.ibi||0)/12)+(prop.comunidad||0);
+          };
+          let lo=0,hi=precio*2;
+          for(let k=0;k<60;k++){const mid=(lo+hi)/2;if(fnEsfuerzo(mid)<objetivo)lo=mid;else hi=mid;}
+          const precioObj=Math.round((lo+hi)/2);
+          const rebaja=precio-precioObj;
+          const pctRebaja=Math.round((rebaja/precio)*100);
+          return "<tr style=\"background:#f8f8f0;border-top:2px solid #111\"><td colspan=\"2\" style=\"padding:8px 8px 4px;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.06em\">Precio objetivo (esfuerzo 30% del sueldo)</td></tr>"
+            + "<tr style=\"background:#edf7f2\"><td style=\"padding:6px 8px;font-weight:700;color:#1a5c3a\">Precio para esfuerzo del 30%</td><td style=\"padding:6px 8px;text-align:right;font-size:17px;font-weight:700;color:#1a5c3a\">" + fmtC(precioObj) + "</td></tr>"
+            + "<tr style=\"background:#fef2f2\"><td style=\"padding:6px 8px;color:#991b1b;font-weight:600\">Rebaja necesaria</td><td style=\"padding:6px 8px;text-align:right;font-weight:700;color:#991b1b\">-" + fmtC(rebaja) + " (" + pctRebaja + "% de descuento)</td></tr>";
         })()
       + "</table>"
       + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
@@ -592,11 +612,11 @@ function printPDF(prop, pts, rank) {
     .contras li::before{content:"✗ ";font-weight:700;color:#991b1b}
     .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:6px;padding:7px 9px;font-size:10px;color:#555;line-height:1.5;margin-bottom:10px}
     .notes-t{font-size:9px;font-weight:700;color:#8a5c00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
-    .gallery{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-bottom:10px}
-    .gallery img{width:100%;height:50px;object-fit:cover;border-radius:3px}
+    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px}
+    .gallery img{width:100%;height:55px;object-fit:cover;border-radius:4px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
-    @media print{body{padding:10px 14px}}
+    .page-2{page-break-before:always;break-before:page;padding-top:14px} @media print{body{padding:10px 14px} .page-2{page-break-before:always!important;break-before:page!important}}
   </style></head><body>
   <div class="header">
     <div style="flex:1;padding-right:16px">
@@ -688,12 +708,11 @@ function printPDF(prop, pts, rank) {
     <div class="footer-t">${prop.url ? prop.url : ""}</div>
     <div class="footer-t">Generado el ${new Date().toLocaleDateString("es-ES")} · CasaFinder</div>
   </div>
-
-  ${calcBlock}
+  <div style="page-break-before:always;break-before:page;padding-top:14px">${calcBlock || ""}</div>
 
   </body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 800);
+  setTimeout(() => w.print(), 500);
 }
 
 
