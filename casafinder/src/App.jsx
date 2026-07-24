@@ -201,14 +201,15 @@ const css = `
   @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg: #f4f4f2; --surface: #ffffff; --dim: #f0f0ee;
-    --border: #e0e0dc; --borderMid: #c4c4c0;
-    --ink: #111110; --inkMid: #444440; --inkDim: #888884; --inkFaint: #bbbbba;
-    --green: #1a5c3a; --greenBg: #edf7f2;
-    --amber: #8a5c00; --amberBg: #fdf6e3;
-    --red: #991b1b; --redBg: #fef2f2;
-    --blue: #1d3f7a; --blueBg: #eff4ff;
-    --sh: 0 1px 3px rgba(0,0,0,0.08); --shMd: 0 4px 16px rgba(0,0,0,0.1);
+    --bg: #FFFFFF; --surface: #FFFFFF; --dim: rgba(37,38,39,0.04);
+    --border: rgba(37,38,39,0.18); --borderMid: rgba(37,38,39,0.30);
+    --ink: #252627; --inkMid: #8A716A; --inkDim: #8A716A; --inkFaint: #C2B8B2;
+    --accent: #8A716A; --accentSoft: rgba(138,113,106,0.15); --tan: #C2B8B2;
+    --green: #0E7C66; --greenBg: #E1F0EC;
+    --amber: #A87B1F; --amberBg: #F3E9D4;
+    --red: #B3462F; --redBg: #F6E4DE;
+    --blue: #1B3A5C; --blueBg: #EEF4FF;
+    --sh: 0 1px 3px rgba(37,38,39,0.08); --shMd: 0 4px 16px rgba(37,38,39,0.12);
   }
   body { background:var(--bg); color:var(--ink); font-family:'Outfit',sans-serif; min-height:100vh; font-size:14px; }
   ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--borderMid);border-radius:2px}
@@ -238,14 +239,14 @@ const css = `
   .tag-blue{background:var(--blueBg);border-color:#93b4e8;color:var(--blue)}
   .tag-amber{background:var(--amberBg);border-color:#e8d598;color:var(--amber)}
   .tag-win{background:#111;color:white;border-color:#111}
-  .prop-card{background:var(--surface);border-radius:10px;border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.2s,border-color 0.2s;box-shadow:var(--sh);position:relative;overflow:hidden}
-  .prop-card:hover{box-shadow:var(--shMd);border-color:var(--borderMid)}
+  .prop-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;position:relative;overflow:hidden}
+  .prop-card:hover{box-shadow:var(--shMd);transform:translateY(-1px)}
   .rank-num{position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1;font-family:'Outfit',sans-serif}
   .score-ring{position:relative;flex-shrink:0}
   .score-ring svg{display:block}
   .score-ring .sval{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  .header{background:var(--ink);height:50px;display:flex;align-items:center;gap:12px;padding:0 22px;position:sticky;top:0;z-index:20}
-  .stat-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 22px;display:flex;gap:0}
+  .header{background:var(--bg);border-bottom:1px solid var(--border);height:56px;display:flex;align-items:center;gap:12px;padding:0 22px;position:sticky;top:0;z-index:20}
+  .stat-bar{background:var(--bg);border-bottom:1px solid var(--border);padding:8px 22px;display:flex;gap:0}
   .stat-item{padding:0 18px;border-right:1px solid var(--border)}
   .stat-item:first-child{padding-left:0}
   .stat-item:last-child{border-right:none}
@@ -286,16 +287,13 @@ const css = `
   .compare-cell.best{background:var(--greenBg);color:var(--green);font-weight:600}
   .compare-label{width:130px;flex-shrink:0;font-size:11px;color:var(--inkFaint);text-transform:uppercase;letter-spacing:0.05em;padding:8px 10px;border-right:1px solid var(--border);display:flex;align-items:center;background:var(--dim)}
   @media print{.no-print{display:none!important}}
-  .sold-overlay{position:absolute;inset:0;background:rgba(255,255,255,0.15);z-index:3;pointer-events:none;border-radius:10px}
-  .sold-x{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:4;pointer-events:none}
-  .sold-x::before,.sold-x::after{content:'';position:absolute;width:85%;height:5px;background:rgba(180,0,0,0.65);border-radius:3px}
-  .sold-x::before{transform:rotate(30deg)}
-  .sold-x::after{transform:rotate(-30deg)}
+  .sold-overlay{position:absolute;inset:0;background:rgba(179,70,47,0.12);z-index:3;pointer-events:none;border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .sold-x{color:#B3462F;font-size:22px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border:3px solid #B3462F;padding:6px 18px;border-radius:6px;transform:rotate(-8deg);pointer-events:none}
   .sold-btn{font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;border:1.5px solid;cursor:pointer;transition:all 0.15s;line-height:1}
   .sold-btn.unsold{background:transparent;color:var(--inkFaint);border-color:var(--border)}
   .sold-btn.unsold:hover{color:var(--red);border-color:var(--red)}
   .sold-btn.issold{background:#fef2f2;color:var(--red);border-color:#fccfcf}
-  .descartada-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.55);z-index:3;border-radius:10px;display:flex;align-items:center;justify-content:center;pointer-events:none}
+  .descartada-overlay{position:absolute;inset:0;background:rgba(37,38,39,0.55);z-index:3;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;pointer-events:none}
   .descartada-label{color:white;font-size:22px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;border:3px solid white;padding:6px 18px;border-radius:6px;transform:rotate(-8deg);opacity:0.92}
   .desc-btn{font-size:10px;font-weight:700;letter-spacing:0.08em;padding:3px 8px;border-radius:4px;border:1.5px solid;cursor:pointer;transition:all 0.15s;line-height:1}
   .desc-btn.nodesc{background:transparent;color:var(--inkFaint);border-color:var(--border)}
@@ -369,7 +367,7 @@ function BreakdownBar({ bd }) {
             <span style={{ fontSize: 12, color: "var(--inkMid)" }}>{b.label}</span>
             <span style={{ fontSize: 12, fontWeight: 600, color: scoreColor(Math.round(b.s * 100)) }}>{Math.round(b.s * 100)}%</span>
           </div>
-          <div style={{ height: 4, background: "var(--dim)", borderRadius: 2, overflow: "hidden" }}>
+          <div style={{ height: 4, background: "rgba(37,38,39,0.04)", borderRadius: 2, overflow: "hidden" }}>
             <div style={{ height: "100%", width: `${b.s * 100}%`, background: scoreColor(Math.round(b.s * 100)), borderRadius: 2, transition: "width 0.5s ease" }} />
           </div>
         </div>
@@ -449,8 +447,31 @@ function printPDF(prop, pts, rank) {
   const banosCat = BANOS_CATS.find(c => c.val === prop.estadoBanos);
   const cocinaCat = COCINA_CATS.find(c => c.val === prop.estadoCocina);
   const aireCat = AIRE_CATS.find(c => c.val === prop.tipoAire);
-  const pros = [...(prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean)];
-  const contras = [...(prop.cocinaNegativos || []).map(v => COCINA_NEGATIVOS.find(x => x.val === v)?.label).filter(Boolean)];
+  // Build pros from all sources
+  const pros = [];
+  if (prop.orientacion === "Sur" || prop.orientacion === "Suroeste" || prop.orientacion === "Sureste") pros.push("Orientación " + prop.orientacion);
+  if ((prop.vistas || []).includes("Mar")) pros.push("Vistas al mar");
+  if (prop.trastero) pros.push("Tiene trastero");
+  if (prop.garaje) pros.push("Tiene garaje");
+  if (prop.piscina) pros.push("Piscina en la comunidad");
+  if (prop.ascensor) pros.push("Con ascensor");
+  if (prop.terraza) pros.push("Con terraza");
+  if (prop.aireCond) pros.push("Aire acondicionado");
+  (prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => pros.push(l));
+  if (prop.otrosPros) pros.push(prop.otrosPros);
+
+  // Build contras from all sources
+  const contras = [];
+  if (usaVrc) contras.push("VRC superior al precio → ITP mayor");
+  if (prop.orientacion === "Norte") contras.push("Orientación Norte");
+  if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
+  if (prop.planta === "Bajo") contras.push("Planta baja");
+  if (["E","F","G"].includes(prop.certEnergetico)) contras.push("Cert. energético " + prop.certEnergetico + " (eficiencia baja)");
+  if (!prop.trastero) contras.push("Sin trastero");
+  if (!prop.garaje) contras.push("Sin garaje");
+  if (prop.comunidad > 160) contras.push("Comunidad alta: " + comunidadMes + " €/mes");
+  (prop.cocinaNegativos || []).map(v => COCINA_NEGATIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => contras.push(l));
+  if (prop.otrosContras) contras.push(prop.otrosContras);
   if (usaVrc) contras.unshift("VRC superior al precio → ITP mayor");
   if (prop.orientacion === "Norte") contras.push("Orientación Norte");
   if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
@@ -491,8 +512,11 @@ function printPDF(prop, pts, rank) {
     const cuota20 = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,240)) / (Math.pow(1+i,240)-1)) : 0;
     const cuota15 = capital > 0 ? Math.round(capital * (i * Math.pow(1+i,180)) / (Math.pow(1+i,180)-1)) : 0;
     const segurosMes = Math.round(900 / 12);
-    const ibiMes = Math.round((prop.ibi || 0) / 12);
-    const comunidadMes = prop.comunidad || 0;
+    const ibiEstimado = (prop.ibi || 0) === 0;
+    const ibiAnual = ibiEstimado ? Math.round(precio * 0.0025) : (prop.ibi || 0);
+    const ibiMes = Math.round(ibiAnual / 12);
+    const comunidadEstimada = (prop.comunidad || 0) === 0;
+    const comunidadMes = comunidadEstimada ? 130 : (prop.comunidad || 0);
     const esfuerzo20 = cuota20 + segurosMes + ibiMes + comunidadMes;
     const esfuerzo15 = cuota15 + segurosMes + ibiMes + comunidadMes;
     const itpRow = vrc > precio
@@ -514,14 +538,14 @@ function printPDF(prop, pts, rank) {
       + "<tr style=\"background:#f0f7ff\"><td colspan=\"2\" style=\"padding:6px 8px;font-size:10px;font-weight:700;color:#1d3f7a;text-transform:uppercase;letter-spacing:0.06em\">Escenario 20 años</td></tr>"
       + "<tr style=\"border-bottom:1px solid #eee;background:#f8f8f6;font-weight:700\"><td style=\"padding:6px 8px\">Cuota hipoteca (20 años · 3,2%)</td><td style=\"padding:6px 8px;text-align:right;font-size:15px\">" + fmtC(cuota20) + "/mes</td></tr>"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Seguros hogar + vida (est.)</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(segurosMes) + "/mes</td></tr>"
-      + (ibiMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(ibiMes) + "/mes</td></tr>" : "")
-      + (comunidadMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(comunidadMes) + "/mes</td></tr>" : "")
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado" + (ibiEstimado ? " <em style=\"font-style:italic;font-size:9px;color:#A87B1F\">(est.)</em>" : "") + "</td><td style=\"padding:5px 8px;text-align:right;color:" + (ibiEstimado?"#A87B1F":"#555") + "\">" + fmtC(ibiMes) + "/mes</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad" + (comunidadEstimada ? " <em style=\"font-style:italic;font-size:9px;color:#A87B1F\">(est.)</em>" : "") + "</td><td style=\"padding:5px 8px;text-align:right;color:" + (comunidadEstimada?"#A87B1F":"#555") + "\">" + fmtC(comunidadMes) + "/mes</td></tr>"
       + "<tr style=\"background:#e8f0ff;font-weight:700;border-bottom:2px solid #111\"><td style=\"padding:7px 8px\">Esfuerzo mensual real (20 años)</td><td style=\"padding:7px 8px;text-align:right;font-size:14px;color:#1d3f7a\">" + fmtC(esfuerzo20) + "/mes</td></tr>"
       + "<tr style=\"background:#f0f7ff\"><td colspan=\"2\" style=\"padding:6px 8px;font-size:10px;font-weight:700;color:#1d3f7a;text-transform:uppercase;letter-spacing:0.06em\">Escenario 15 años</td></tr>"
       + "<tr style=\"border-bottom:1px solid #eee;background:#f8f8f6;font-weight:700\"><td style=\"padding:6px 8px\">Cuota hipoteca (15 años · 3,2%)</td><td style=\"padding:6px 8px;text-align:right;font-size:15px\">" + fmtC(cuota15) + "/mes</td></tr>"
       + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Seguros hogar + vida (est.)</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(segurosMes) + "/mes</td></tr>"
-      + (ibiMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(ibiMes) + "/mes</td></tr>" : "")
-      + (comunidadMes > 0 ? "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad</td><td style=\"padding:5px 8px;text-align:right;color:#555\">" + fmtC(comunidadMes) + "/mes</td></tr>" : "")
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· IBI prorrateado" + (ibiEstimado ? " <em style=\"font-style:italic;font-size:9px;color:#A87B1F\">(est.)</em>" : "") + "</td><td style=\"padding:5px 8px;text-align:right;color:" + (ibiEstimado?"#A87B1F":"#555") + "\">" + fmtC(ibiMes) + "/mes</td></tr>"
+      + "<tr style=\"border-bottom:1px solid #eee\"><td style=\"padding:5px 8px 5px 20px;color:#888\">· Comunidad" + (comunidadEstimada ? " <em style=\"font-style:italic;font-size:9px;color:#A87B1F\">(est.)</em>" : "") + "</td><td style=\"padding:5px 8px;text-align:right;color:" + (comunidadEstimada?"#A87B1F":"#555") + "\">" + fmtC(comunidadMes) + "/mes</td></tr>"
       + "<tr style=\"background:#e8f0ff;font-weight:700\"><td style=\"padding:7px 8px\">Esfuerzo mensual real (15 años)</td><td style=\"padding:7px 8px;text-align:right;font-size:14px;color:#1d3f7a\">" + fmtC(esfuerzo15) + "/mes</td></tr>"
       + (() => {
           const sueldo = 2600;
@@ -558,6 +582,7 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#fef2f2\"><td style=\"padding:6px 8px;color:#991b1b;font-weight:600\">Rebaja necesaria</td><td style=\"padding:6px 8px;text-align:right;font-weight:700;color:#991b1b\">-" + fmtC(rebaja) + " (" + pctRebaja + "% de descuento)</td></tr>";
         })()
       + "</table>"
+      + ((ibiEstimado || comunidadEstimada) ? "<div style=\"margin-top:10px;background:#F3E9D4;border:1px solid rgba(168,123,31,0.3);border-radius:6px;padding:7px 10px;font-size:10px;color:#A87B1F;line-height:1.5\"><strong>⚠ Valores estimados:</strong> " + (ibiEstimado ? "IBI (0,25% precio anual). " : "") + (comunidadEstimada ? "Comunidad (130 €/mes media zona). " : "") + "Introdúcelos en la ficha para cálculos exactos.</div>" : "")
       + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
@@ -993,7 +1018,7 @@ function PropertyModal({ prop, onSave, onClose }) {
                 {numField("Año de construcción", "anoConstruccion")}
                 <div>
                   <label className="label">Antigüedad</label>
-                  <input type="text" readOnly value={antiguedad != null ? antiguedad + " años" : "—"} style={{ background: "var(--dim)", color: "var(--inkDim)" }} />
+                  <input type="text" readOnly value={antiguedad != null ? antiguedad + " años" : "—"} style={{ background: "rgba(37,38,39,0.04)", color: "var(--inkDim)" }} />
                 </div>
               </>)}
 
@@ -1042,7 +1067,7 @@ function PropertyModal({ prop, onSave, onClose }) {
                 </div>
               )}
               {form.certEnergetico === "Sí" && (
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px", background: "var(--dim)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px", background: "rgba(37,38,39,0.04)", borderRadius: 8, border: "1px solid var(--border)" }}>
                   {[["consumoEnergetico","Consumo energético","kWh/m²"],["emisionesEnergetico","Emisiones CO₂","kg CO₂/m²"]].map(([key, lbl, unit]) => (
                     <div key={key}>
                       <label className="label">{lbl} <span style={{ color: "var(--inkFaint)", fontWeight: 400 }}>({unit})</span></label>
@@ -1260,7 +1285,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
           {comparing.length >= 2 && (
             <>
               {winner && (
-                <div style={{ background: "var(--dim)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
+                <div style={{ background: "rgba(37,38,39,0.04)", border: "1px solid var(--border)", borderRadius: 8, padding: "12px 16px", marginBottom: 16 }}>
                   <span className="tag tag-win" style={{ marginRight: 8 }}>🏆 Ganadora</span>
                   <strong>{winner.title}</strong>
                   {winnerReasons.length > 0 && (
@@ -1275,7 +1300,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr>
-                      <th style={{ width: 130, padding: "8px 10px", textAlign: "left", fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", background: "var(--dim)", borderBottom: "1px solid var(--border)" }}>Criterio</th>
+                      <th style={{ width: 130, padding: "8px 10px", textAlign: "left", fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", background: "rgba(37,38,39,0.04)", borderBottom: "1px solid var(--border)" }}>Criterio</th>
                       {comparing.map((p, i) => (
                         <th key={p.id} style={{ padding: "8px 10px", textAlign: "left", background: p === winner ? "#111" : "var(--dim)", color: p === winner ? "white" : "var(--ink)", borderBottom: "1px solid var(--border)", fontWeight: 600, fontSize: 12 }}>
                           {p === winner && "🏆 "}#{rankMap[p.id]} · {p.title || "Sin título"}
@@ -1286,7 +1311,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                   <tbody>
                     {rows.map((row, ri) => (
                       <tr key={ri} style={{ borderBottom: "1px solid var(--border)" }}>
-                        <td style={{ padding: "7px 10px", fontSize: 11, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.04em", background: "var(--dim)", fontWeight: 500 }}>{row.label}</td>
+                        <td style={{ padding: "7px 10px", fontSize: 11, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.04em", background: "rgba(37,38,39,0.04)", fontWeight: 500 }}>{row.label}</td>
                         {comparing.map((p, pi) => {
                           const best = isBest(row, pi);
                           const cScore = row.criterionId ? criterionScore(p, row.criterionId) : null;
@@ -1300,7 +1325,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
                       </tr>
                     ))}
                     {/* Totals row */}
-                    <tr style={{ borderTop: "2px solid var(--border)", background: "var(--dim)" }}>
+                    <tr style={{ borderTop: "2px solid var(--border)", background: "rgba(37,38,39,0.04)" }}>
                       <td style={{ padding: "9px 10px", fontSize: 11, fontWeight: 700, color: "var(--inkMid)", textTransform: "uppercase", letterSpacing: "0.04em" }}>TOTAL</td>
                       {comparing.map((p, pi) => {
                         const total = scores[pi].pts;
@@ -1376,7 +1401,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
 
         <div style={{ padding: "16px 22px 20px" }}>
           {/* Price */}
-          <div style={{ background: "var(--dim)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
+          <div style={{ background: "rgba(37,38,39,0.04)", borderRadius: 8, padding: "14px 16px", marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 12, marginBottom: 12 }}>
               <div>
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", letterSpacing: "-0.02em", lineHeight: 1 }}>
@@ -1705,7 +1730,7 @@ export default function App() {
         <input value={filter} onChange={e => setFilter(e.target.value)} placeholder="Buscar…"
           style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 11px", fontSize: 12, width: 130, outline: "none" }} />
         <select value={sort} onChange={e => setSort(e.target.value)}
-          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", padding: "6px 9px", fontSize: 12, outline: "none" }}>
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: 6, color: "var(--ink)", padding: "6px 9px", fontSize: 12, outline: "none" }}>
           <option value="score">Ranking</option>
           <option value="price">Precio ↑</option>
           <option value="size">Más grandes</option>
@@ -1717,15 +1742,15 @@ export default function App() {
           {[...new Set(props.map(p => p.zone).filter(Boolean))].sort().map(z => <option key={z} value={z}>{z}</option>)}
         </select>
         <button className="btn btn-ghost btn-sm" onClick={() => setShowCompare(true)}
-          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--inkMid)", fontSize: 12 }}>
           ⚖ Comparar
         </button>
         <button className="btn btn-ghost btn-sm" onClick={() => setShowCrit(true)}
-          style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.6)", fontSize: 12 }}>
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--inkMid)", fontSize: 12 }}>
           ⚙ Criterios
         </button>
         <button className="btn btn-sm" onClick={() => { setEditing(null); setShowAdd(true); }}
-          style={{ background: "white", color: "var(--ink)", fontWeight: 600 }}>
+          style={{ background: "var(--accent)", color: "white", fontWeight: 600, border: "1px solid var(--accent)" }}>
           + Añadir
         </button>
       </div>
@@ -1753,7 +1778,7 @@ export default function App() {
           return (
             <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold || p.descartada ? 0.7 : 1 }} onClick={() => setDetail(p)}>
               <div className="rank-num">#{rank}</div>
-              {p.sold && <div className="sold-overlay"><div className="sold-x"/></div>}
+              {p.sold && <div className="sold-overlay"><div className="sold-x">SOLD</div></div>}
               {p.descartada && !p.sold && <div className="descartada-overlay"><div className="descartada-label">Descartada</div></div>}
               {photos.length > 0 && (
                 <div onClick={e => e.stopPropagation()}>
