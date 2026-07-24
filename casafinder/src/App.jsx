@@ -234,10 +234,11 @@ const css = `
   .toggle{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:500;transition:all 0.15s;user-select:none;background:var(--surface);color:var(--inkMid)}
   .toggle.on{background:var(--greenBg);border-color:#a8d5be;color:var(--green)}
   .toggle-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}
-  .tag{display:inline-flex;align-items:center;gap:3px;background:var(--dim);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:13px;color:var(--inkMid);font-weight:500;white-space:nowrap}
-  .tag-green{background:var(--greenBg);border-color:#a8d5be;color:var(--green)}
-  .tag-blue{background:var(--blueBg);border-color:#93b4e8;color:var(--blue)}
-  .tag-amber{background:var(--amberBg);border-color:#e8d598;color:var(--amber)}
+  .tag{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:13px;color:var(--inkMid);font-weight:500;white-space:nowrap}
+  .tag svg{width:13px;height:13px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:butt;stroke-linejoin:miter}
+  .tag-green{background:var(--bg);border-color:rgba(14,124,102,0.35);color:var(--green)}
+  .tag-blue{background:var(--bg);border-color:rgba(27,58,92,0.25);color:var(--blue)}
+  .tag-amber{background:var(--bg);border-color:rgba(168,123,31,0.35);color:var(--amber)}
   .tag-win{background:#111;color:white;border-color:#111}
   .prop-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;position:relative;overflow:hidden}
   .prop-card:hover{box-shadow:var(--shMd);transform:translateY(-1px)}
@@ -1825,24 +1826,24 @@ export default function App() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                  {(!p.certEnergetico || ["No indicado","En trámite"].includes(p.certEnergetico)) && <span className="tag" title="Sin certificado energético" style={{ background:"#fef2f2", borderColor:"var(--red)", borderWidth:2, color:"var(--red)", fontWeight:600 }}>⚠ Sin cert.</span>}
+                  {(!p.certEnergetico || ["No indicado","En trámite"].includes(p.certEnergetico)) && <span className="tag" title="Sin certificado energético" style={{ background:"var(--bg)", borderColor:"var(--red)", borderWidth:2, color:"var(--red)", fontWeight:600 }}><svg viewBox="0 0 24 24"><path d="M12 2L2 20h20L12 2Z"/><path d="M12 9v5"/><circle cx="12" cy="17.5" r="0.6" fill="currentColor" stroke="none"/></svg> Sin cert.</span>}
                   {p.tipoInmueble && <span className="tag tag-blue" title={p.tipoInmueble}>{p.tipoInmueble}</span>}
                   {p.planta && <span className="tag" title={"Planta: " + p.planta}>{p.planta}</span>}
                   {[
-                    ["trastero","📦","Trastero"],
-                    ["garaje","🚗","Garaje"],
-                    ["terraza","🌿","Terraza"],
-                    ["piscina","🏊","Piscina"],
-                    ["aireCond","❄️","Aire acondicionado"],
-                    ["ascensor","🛗","Ascensor"],
-                    ["lavadero","🧺","Lavadero"]
+                    ["trastero",<svg viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 8l9-5 9 5"/><path d="M9 14h6"/></svg>,"Trastero"],
+                    ["garaje",<svg viewBox="0 0 24 24"><path d="M5 17H3V10l2-5h14l2 5v7h-2"/><path d="M5 17a2 2 0 0 0 4 0M15 17a2 2 0 0 0 4 0"/><path d="M3 12h18"/></svg>,"Garaje"],
+                    ["terraza",<svg viewBox="0 0 24 24"><path d="M12 3v2M12 19v2M3 12H1M23 12h-2"/><circle cx="12" cy="12" r="4"/></svg>,"Terraza"],
+                    ["piscina",<svg viewBox="0 0 24 24"><path d="M2 12c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M2 17c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M8 7V3M16 7V3"/></svg>,"Piscina"],
+                    ["aireCond",<svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="9" rx="2"/><path d="M7 15v4M12 15v4M17 15v4"/><path d="M6 10h12"/></svg>,"Aire acondicionado"],
+                    ["ascensor",<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 10l3-3 3 3"/><path d="M9 14l3 3 3-3"/></svg>,"Ascensor"],
+                    ["lavadero",<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M6 6h1M9 6h1"/></svg>,"Lavadero"]
                   ].map(([k,e,lbl]) => p[k] ? <span key={k} className="tag tag-green" title={lbl}>{e}</span> : null)}
                   {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" title={"Baños: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
                   {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" title={"Cocina: "+c.label+" — "+c.desc}>🍳{c.icon}</span>:null; })()}
                   {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" title={"A/C: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
-                  {p.soleria && <span className="tag tag-amber" title={"Solería: "+p.soleria}>🪨</span>}
+                  {p.soleria && <span className="tag tag-amber" title={"Solería: "+p.soleria}><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg></span>}
                   {p.orientacion && <span className="tag" title={"Orientación: "+p.orientacion}>🧭</span>}
-                  {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}>👁</span>}
+                  {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}><svg viewBox="0 0 24 24"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>}
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.visitada ? "var(--green)" : "var(--inkFaint)", fontWeight: 500 }}>
