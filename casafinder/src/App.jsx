@@ -690,19 +690,19 @@ function printPDF(prop, pts, rank) {
           ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
-          [["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + prop.certEnergetico + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
+          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + prop.certEnergetico + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
           ["Inmobiliaria", prop.inmobiliaria],
           ["VRC", prop.vrc > 0 ? Number(prop.vrc).toLocaleString("es-ES") + " €" + (usaVrc ? " ⚠" : "") : null],
           ["ITP real", prop.price > 0 ? itpReal : null],
-        ].filter(([,v]) => v).map(([l,v]) => `<div class="dr"><div class="dl">${l}</div><div class="dv">${v}</div></div>`).join("")}
-        ${prop.visitada ? `
-          <div class="dr"><div class="dl">Visita</div><div class="dv" style="color:#1a5c3a;font-weight:600">✓ Visitada</div></div>
-          ${prop.fechaVisita ? `<div class="dr"><div class="dl">Fecha</div><div class="dv">${new Date(prop.fechaVisita).toLocaleDateString("es-ES")}</div></div>` : ""}
-          ${prop.personaVisita ? `<div class="dr"><div class="dl">Agente</div><div class="dv">${prop.personaVisita}</div></div>` : ""}
-        ` : ""}
+        ].filter(([,v]) => v).map(([l,v]) => "<div class=\"dr\"><div class=\"dl\">" + l + "</div><div class=\"dv\">" + v + "</div></div>").join("")}
+        ${prop.visitada ? (
+          "<div class=\"dr\"><div class=\"dl\">Visita</div><div class=\"dv\" style=\"color:#1a5c3a;font-weight:600\">✓ Visitada</div></div>" +
+          (prop.fechaVisita ? "<div class=\"dr\"><div class=\"dl\">Fecha</div><div class=\"dv\">" + new Date(prop.fechaVisita).toLocaleDateString("es-ES") + "</div></div>" : "") +
+          (prop.personaVisita ? "<div class=\"dr\"><div class=\"dl\">Agente</div><div class=\"dv\">" + prop.personaVisita + "</div></div>" : "")
+        ) : ""}
       </div>
       ${certDesc ? `<div style="margin-top:8px;background:#f0f0ee;border-left:3px solid #888;padding:8px 12px;font-size:11px;color:#555;line-height:1.5"><strong>Calificación ${certKey}:</strong> ${certDesc}</div>` : ""}
     </div>
