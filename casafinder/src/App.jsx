@@ -162,12 +162,20 @@ function calcScore(prop, criteria) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function fileToBase64(file) {
-  return new Promise((res, rej) => {
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
+function compressImage(file, maxW = 900, quality = 0.72) {
+  return new Promise(res => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const scale = Math.min(1, maxW / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      res(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = url;
   });
 }
 
@@ -235,10 +243,10 @@ const css = `
   .toggle.on{background:var(--greenBg);border-color:#a8d5be;color:var(--green)}
   .toggle-dot{width:13px;height:13px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:8px;flex-shrink:0}
   .tag{display:inline-flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:13px;color:var(--inkMid);font-weight:500;white-space:nowrap}
-  .tag svg{width:13px;height:13px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:butt;stroke-linejoin:miter}
-  .tag-green{background:var(--bg);border-color:rgba(14,124,102,0.35);color:var(--green)}
-  .tag-blue{background:var(--bg);border-color:rgba(27,58,92,0.25);color:var(--blue)}
-  .tag-amber{background:var(--bg);border-color:rgba(168,123,31,0.35);color:var(--amber)}
+  .tag svg{width:16px;height:16px;flex-shrink:0;fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:butt;stroke-linejoin:miter}
+  .tag-green{background:var(--bg);border-color:var(--border);color:var(--ink)}
+  .tag-blue{background:var(--bg);border-color:var(--border);color:var(--ink)}
+  .tag-amber{background:var(--bg);border-color:var(--border);color:var(--ink)}
   .tag-win{background:#111;color:white;border-color:#111}
   .prop-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;position:relative;overflow:hidden}
   .prop-card:hover{box-shadow:var(--shMd);transform:translateY(-1px)}
@@ -382,7 +390,7 @@ function PhotoUploader({ photos = [], onChange }) {
   const inputRef = useRef();
   const [over, setOver] = useState(false);
   const addFiles = async (files) => {
-    const n = await Promise.all(Array.from(files).map(fileToBase64));
+    const n = await Promise.all(Array.from(files).map(f => compressImage(f)));
     onChange([...photos, ...n]);
   };
   const remove = (i) => onChange(photos.filter((_, idx) => idx !== i));
@@ -460,6 +468,8 @@ function printPDF(prop, pts, rank) {
   if (prop.aireCond) pros.push("Aire acondicionado");
   (prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => pros.push(l));
   if (prop.otrosPros) pros.push(prop.otrosPros);
+  // Deduplicate pros
+  const prosUniq = [...new Set(pros.map(p => p.trim()))];
 
   // Build contras from all sources
   const contras = [];
@@ -473,6 +483,8 @@ function printPDF(prop, pts, rank) {
   if (prop.comunidad > 160) contras.push("Comunidad alta: " + comunidadMes + " €/mes");
   (prop.cocinaNegativos || []).map(v => COCINA_NEGATIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => contras.push(l));
   if (prop.otrosContras) contras.push(prop.otrosContras);
+  // Deduplicate contras
+  const contrasUniq = [...new Set(contras.map(c => c.trim()))];
   if (usaVrc) contras.unshift("VRC superior al precio → ITP mayor");
   if (prop.orientacion === "Norte") contras.push("Orientación Norte");
   if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
@@ -480,6 +492,8 @@ function printPDF(prop, pts, rank) {
   if (!prop.trastero) contras.push("Sin trastero");
   if (prop.otrosPros) pros.push(prop.otrosPros);
   if (prop.otrosContras) contras.push(prop.otrosContras);
+  // Deduplicate contras
+  const contrasUniq = [...new Set(contras.map(c => c.trim()))];
   if (!prop.garaje) contras.push("Sin garaje");
   if (prop.orientacion === "Sur" || prop.orientacion === "Suroeste") pros.unshift("Orientación " + prop.orientacion);
   if (prop.trastero) pros.push("Tiene trastero");
@@ -638,8 +652,8 @@ function printPDF(prop, pts, rank) {
     .contras li::before{content:"✗ ";font-weight:700;color:#991b1b}
     .notes{background:#fdf6e3;border:1px solid #e8d598;border-radius:6px;padding:7px 9px;font-size:10px;color:#555;line-height:1.5;margin-bottom:10px}
     .notes-t{font-size:9px;font-weight:700;color:#8a5c00;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px}
-    .gallery{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:8px}
-    .gallery img{width:100%;height:55px;object-fit:cover;border-radius:4px}
+    .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:8px}
+    .gallery img{width:100%;height:110px;object-fit:cover;border-radius:4px}
     .footer{border-top:1px solid #e0e0dc;padding-top:6px;display:flex;justify-content:space-between}
     .footer-t{font-size:9px;color:#aaa}
     .page-2{page-break-before:always;break-before:page;padding-top:14px} @media print{body{padding:10px 14px} .page-2{page-break-before:always!important;break-before:page!important}}
@@ -691,8 +705,7 @@ function printPDF(prop, pts, rank) {
           ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
-          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? prop.certEnergetico + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") : prop.certEnergetico],
-          ["Implicaciones cert.", certDesc],
+          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? '<b style="font-size:18px;color:' + (certKey||"E") in {"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"} ? {"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey||"E"] : "#888"}'>'+ prop.certEnergetico + '</b>' + (prop.consumoEnergetico ? ' · ' + prop.consumoEnergetico + ' kWh/m²' : '') + (certDesc ? '<br><small style="font-size:9px;color:#666">' + certDesc + '</small>' : '') : prop.certEnergetico],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
@@ -708,20 +721,23 @@ function printPDF(prop, pts, rank) {
       </div>
       ${certDesc ? `<div style="margin-top:8px;background:#f0f0ee;border-left:3px solid #888;padding:8px 12px;font-size:11px;color:#555;line-height:1.5"><strong>Calificación ${certKey}:</strong> ${certDesc}</div>` : ""}
     </div>
-    <div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div>
       <div class="sec">Características</div>
       <div class="tags">${tags.map(t => `<span class="tag tag-g">${t}</span>`).join("")}</div>
-      ${(prop.vistas || []).length > 0 ? `<div class="sec">Vistas</div><div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag tag-b">👁 ${v}</span>`).join("")}</div>` : ""}
-      ${pros.length > 0 ? `<div class="sec" style="margin-top:10px;color:#1a5c3a">Aspectos positivos cocina</div><div class="tags">${pros.slice(0,4).map(p=>`<span class="tag tag-g">✅ ${p}</span>`).join("")}</div>` : ""}
-      ${contras.length > 0 && prop.cocinaNegativos?.length > 0 ? `<div class="sec" style="color:#991b1b">Aspectos negativos cocina</div><div class="tags">${(prop.cocinaNegativos||[]).map(v=>{const p=COCINA_NEGATIVOS.find(x=>x.val===v);return p?`<span class="tag tag-r">🔴 ${p.label}</span>`:""}).join("")}</div>` : ""}
+      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag tag-b">👁 ${v}</span>`).join("")}</div>` : ""}
+      </div>
+      <div>
+      <div class="sec">Pros y contras</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div class="pros"><h3>✓ Pros</h3><ul>${prosUniq.map(p=>`<li>${p}</li>`).join("") || "<li>—</li>"}</ul></div>
+        <div class="contras"><h3>✗ Contras</h3><ul>${contrasUniq.map(c=>`<li>${c}</li>`).join("") || "<li>—</li>"}</ul></div>
+      </div>
+      </div>
     </div>
   </div>
 
-  <div class="sec">Pros y contras</div>
-  <div class="pros-contras">
-    <div class="pros"><h3>✓ Pros</h3><ul>${pros.map(p=>`<li>${p}</li>`).join("") || "<li>Sin pros registrados</li>"}</ul></div>
-    <div class="contras"><h3>✗ Contras</h3><ul>${contras.map(c=>`<li>${c}</li>`).join("") || "<li>Sin contras registrados</li>"}</ul></div>
-  </div>
+
 
   ${prop.notes ? `<div class="notes"><div class="notes-t">📝 Notas</div>${prop.notes}</div>` : ""}
 
@@ -1698,16 +1714,28 @@ export default function App() {
     return m2 && p.price ? Math.round(p.price / m2) : 999999;
   };
 
+  const isInactive = p => p.sold || p.descartada;
+
   const visible = scored
     .filter(p => !filter || [p.title, p.zone, p.address].join(" ").toLowerCase().includes(filter.toLowerCase()))
     .filter(p => !zoneFilter || p.zone === zoneFilter)
     .sort((a, b) => {
+      // Sold/descartada always go to end
+      if (isInactive(a) && !isInactive(b)) return 1;
+      if (!isInactive(a) && isInactive(b)) return -1;
       if (sort === "score") return b.pts - a.pts;
       if (sort === "price") return (a.price || 0) - (b.price || 0);
       if (sort === "size") return (b.sizeUtil || b.sizeConstruida || 0) - (a.sizeUtil || a.sizeConstruida || 0);
       if (sort === "ratio") return getRatio(a) - getRatio(b);
       return 0;
     });
+
+  // Re-rank: only active properties get sequential rank
+  let activeRank = 0;
+  const rankedVisible = visible.map(p => ({
+    ...p,
+    displayRank: isInactive(p) ? null : ++activeRank
+  }));
 
   const best = Math.max(0, ...scored.map(s => s.pts));
   const avgPrice = props.length ? Math.round(props.reduce((a, b) => a + (b.price || 0), 0) / props.length) : 0;
@@ -1771,8 +1799,8 @@ export default function App() {
       </div>
 
       <div style={{ padding: "18px 22px", display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(276px, 1fr))", gap: 12 }}>
-        {visible.map((p, i) => {
-          const rank = rankMap[p.id];
+        {rankedVisible.map((p, i) => {
+          const rank = p.displayRank;
           const photos = p.photos || [];
           const m2 = p.sizeUtil || p.sizeConstruida || 0;
           const ratio = m2 && p.price ? Math.round(p.price / m2).toLocaleString("es-ES") + " €/m²" : "";
@@ -1845,6 +1873,12 @@ export default function App() {
                   {p.orientacion && <span className="tag" title={"Orientación: "+p.orientacion}>🧭</span>}
                   {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}><svg viewBox="0 0 24 24"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>}
                 </div>
+                {p.inmobiliaria && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderTop: "1px solid var(--border)", fontSize: 11, color: "var(--inkMid)", background: "rgba(37,38,39,0.02)" }}>
+                    <svg viewBox="0 0 24 24" style={{ width: 12, height: 12, flexShrink: 0, fill: "none", stroke: "var(--inkFaint)", strokeWidth: 1.75, strokeLinecap: "butt", strokeLinejoin: "miter" }}><path d="M3 5a2 2 0 0 1 2-2h3l1 4-2 1a11 11 0 0 0 7 7l1-2 4 1v3a2 2 0 0 1-2 2A18 18 0 0 1 3 5Z"/></svg>
+                    <span style={{ fontWeight: 500, color: "var(--ink)", fontSize: 11 }}>{p.inmobiliaria}</span>
+                  </div>
+                )}
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: 11, color: p.visitada ? "var(--green)" : "var(--inkFaint)", fontWeight: 500 }}>
                     {p.visitada ? "🏠 Visitada" + (p.fechaVisita ? " · " + new Date(p.fechaVisita).toLocaleDateString("es-ES") : "") : "Sin visitar"}
