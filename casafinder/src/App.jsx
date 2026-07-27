@@ -468,8 +468,6 @@ function printPDF(prop, pts, rank) {
   if (prop.aireCond) pros.push("Aire acondicionado");
   (prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => pros.push(l));
   if (prop.otrosPros) pros.push(prop.otrosPros);
-  // Deduplicate pros
-  const prosUniq = [...new Set(pros.map(p => p.trim()))];
 
   // Build contras from all sources
   const contras = [];
@@ -483,23 +481,10 @@ function printPDF(prop, pts, rank) {
   if (prop.comunidad > 160) contras.push("Comunidad alta: " + comunidadMes + " €/mes");
   (prop.cocinaNegativos || []).map(v => COCINA_NEGATIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => contras.push(l));
   if (prop.otrosContras) contras.push(prop.otrosContras);
-  // Deduplicate contras
-  const contrasUniq = [...new Set(contras.map(c => c.trim()))];
-  if (usaVrc) contras.unshift("VRC superior al precio → ITP mayor");
-  if (prop.orientacion === "Norte") contras.push("Orientación Norte");
-  if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
-  if (prop.comunidad > 160) contras.push("Comunidad alta: " + prop.comunidad + " €/mes");
-  if (!prop.trastero) contras.push("Sin trastero");
-  if (prop.otrosPros) pros.push(prop.otrosPros);
-  if (prop.otrosContras) contras.push(prop.otrosContras);
-  // Deduplicate contras
-  const contrasUniq = [...new Set(contras.map(c => c.trim()))];
-  if (!prop.garaje) contras.push("Sin garaje");
-  if (prop.orientacion === "Sur" || prop.orientacion === "Suroeste") pros.unshift("Orientación " + prop.orientacion);
-  if (prop.trastero) pros.push("Tiene trastero");
-  if (prop.garaje) pros.push("Tiene garaje");
-  if ((prop.vistas || []).includes("Mar")) pros.unshift("Vistas al mar");
 
+  // Deduplicate
+  const prosUniq = [...new Set(pros.map(p => p.trim()))];
+  const contrasUniq = [...new Set(contras.map(c => c.trim()))];
   // certEnergetico puede ser "Sí" (y la letra en consumoEnergetico) o directamente una letra A-G
   const certLetras = ["A","B","C","D","E","F","G"];
   const certKey = certLetras.includes(prop.certEnergetico) ? prop.certEnergetico
@@ -705,7 +690,7 @@ function printPDF(prop, pts, rank) {
           ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
-          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? '<b style="font-size:18px;color:' + (certKey||"E") in {"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"} ? {"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey||"E"] : "#888"}'>'+ prop.certEnergetico + '</b>' + (prop.consumoEnergetico ? ' · ' + prop.consumoEnergetico + ' kWh/m²' : '') + (certDesc ? '<br><small style="font-size:9px;color:#666">' + certDesc + '</small>' : '') : prop.certEnergetico],
+          [["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + prop.certEnergetico + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
