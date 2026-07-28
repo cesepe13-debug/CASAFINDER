@@ -780,7 +780,7 @@ function PropertyModal({ prop, onSave, onClose }) {
     visitada: false, fechaVisita: "", personaVisita: "", otrosPros: "", otrosContras: "", descartada: false,
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, vrc: 0, inmobiliaria: "", notes: "",
-    enviadaLaure: false, photos: [],
+    enviadaLaure: false, photos: [], mapAddress: "", lat: null, lng: null,
   };
   const cleanVal = (v) => v === undefined ? null : v;
   const cleanProp = prop ? Object.fromEntries(Object.entries({ ...blank, ...prop, photos: prop.photos || [] }).map(([k,v]) => [k, v === undefined ? blank[k] : v])) : blank;
@@ -870,6 +870,30 @@ function PropertyModal({ prop, onSave, onClose }) {
                 )}
               </div>
               <div style={{ marginTop: 8 }}>{txtField("Dirección", "address", "C/ …")}</div>
+              <div style={{ marginTop: 8 }}>
+                <label className="label">Ubicación exacta en mapa</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <input type="text" value={form.mapAddress || ""} onChange={e => s("mapAddress", e.target.value)}
+                    placeholder="Ej: Calle Jacinto Benavente 3, Marbella"
+                    style={{ flex: 1, padding: "7px 10px", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12, fontFamily: "inherit" }} />
+                  <button type="button" onClick={async () => {
+                    const q = form.mapAddress || (form.address + ", " + form.zone + ", Málaga");
+                    if (!q.trim()) return;
+                    try {
+                      const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(q) + "&limit=1");
+                      const d = await r.json();
+                      if (d[0]) {
+                        s("lat", parseFloat(d[0].lat));
+                        s("lng", parseFloat(d[0].lon));
+                        alert("✓ Ubicación encontrada: " + d[0].display_name.split(",").slice(0,2).join(","));
+                      } else { alert("No se encontró la dirección. Prueba a ser más específico."); }
+                    } catch(e) { alert("Error de geocodificación: " + e.message); }
+                  }} style={{ padding: "7px 12px", background: "var(--ink)", color: "white", border: "none", borderRadius: 6, fontSize: 12, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}>
+                    📍 Localizar
+                  </button>
+                </div>
+                {form.lat && form.lng && <div style={{ fontSize: 11, color: "var(--green)", marginTop: 4 }}>✓ Ubicación guardada ({form.lat.toFixed(4)}, {form.lng.toFixed(4)})</div>}
+              </div>
 
               <div className="sec">Identificación</div>
               {row2(<>
@@ -1440,7 +1464,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
                   {prop.comunidad > 0 ? prop.comunidad + " €" : "150 €* (est.)"}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>comunidad/mes</div>
+                <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{p.comunidad > 0 ? "comunidad/mes" : "comunidad/mes (est.)"}</div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -1581,12 +1605,166 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
+// ── MapModal ──────────────────────────────────────────────────────────────────
+function MapModal({ props, onClose, onOpenDetail }) {
+  const mapRef = React.useRef(null);
+  const mapInstanceRef = React.useRef(null);
+  const markersRef = React.useRef({});
+
+  React.useEffect(() => {
+    // Load Leaflet CSS
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    // Load Leaflet JS
+    const loadMap = () => {
+      if (mapInstanceRef.current) return;
+      const L = window.L;
+      if (!L) return;
+      const map = L.map(mapRef.current).setView([36.500, -4.900], 12);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors", maxZoom: 19
+      }).addTo(map);
+      mapInstanceRef.current = map;
+
+      // Destination marker
+      const DEST = { lat: 36.51115, lng: -4.88237 };
+      const destIcon = L.divIcon({
+        className: "",
+        html: '<div style="width:14px;height:14px;background:#0E7C66;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.3)"></div>',
+        iconSize: [14, 14], iconAnchor: [7, 7]
+      });
+      L.marker([DEST.lat, DEST.lng], { icon: destIcon }).addTo(map)
+        .bindTooltip("Calle Mercado 8, Marbella", { permanent: true, direction: "right", offset: [10, 0] });
+
+      // Property markers
+      const active = props.filter(p => p.lat && p.lng && !p.sold && !p.descartada);
+      let activeRank = 0;
+      const scored = [...props].filter(p => !p.sold && !p.descartada);
+
+      active.forEach(p => {
+        const rank = p.displayRank;
+        const isFirst = rank === 1;
+        const color = isFirst ? "#A87B1F" : "#252627";
+        const size = isFirst ? 36 : 30;
+        const icon = L.divIcon({
+          className: "",
+          html: `<div style="width:${size}px;height:${size}px;background:${color};color:white;border:2.5px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Outfit,sans-serif;font-size:${isFirst?13:11}px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer">#${rank}</div>`,
+          iconSize: [size, size], iconAnchor: [size/2, size/2]
+        });
+        const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+        markersRef.current[p.id] = marker;
+
+        const km = p.distanciaKm ? p.distanciaKm + " km al trabajo" : "";
+        marker.bindPopup(`
+          <div style="font-family:Outfit,sans-serif;min-width:180px">
+            <div style="font-size:10px;font-weight:700;color:#8A716A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px">Ranking #${rank}</div>
+            <div style="font-size:13px;font-weight:700;color:#252627;margin-bottom:2px;line-height:1.3">${p.title || "Sin título"}</div>
+            <div style="font-size:11px;color:#8A716A;margin-bottom:6px">${p.zone || ""}</div>
+            <div style="font-size:15px;font-weight:700;color:#252627">${p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}</div>
+            ${km ? `<div style="font-size:11px;color:#0E7C66;font-weight:600;margin-top:4px">📍 ${km}</div>` : ""}
+            <button onclick="window.__cfOpenDetail('${p.id}')" style="display:block;width:100%;margin-top:8px;padding:6px;background:#252627;color:white;border:none;border-radius:5px;font-family:Outfit,sans-serif;font-size:11px;font-weight:600;cursor:pointer">Ver ficha</button>
+          </div>
+        `);
+      });
+
+      // Global callback for popup button
+      window.__cfOpenDetail = (id) => {
+        const prop = props.find(p => p.id === id);
+        if (prop) { onClose(); setTimeout(() => onOpenDetail(prop), 100); }
+      };
+    };
+
+    if (window.L) {
+      loadMap();
+    } else {
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.onload = loadMap;
+      document.head.appendChild(script);
+    }
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+      delete window.__cfOpenDetail;
+    };
+  }, []);
+
+  const flyTo = (p) => {
+    if (mapInstanceRef.current && p.lat && p.lng) {
+      mapInstanceRef.current.setView([p.lat, p.lng], 15);
+      markersRef.current[p.id]?.openPopup();
+    }
+  };
+
+  const active = props.filter(p => p.lat && p.lng && !p.sold && !p.descartada)
+    .sort((a, b) => (a.displayRank || 99) - (b.displayRank || 99));
+  const noCoords = props.filter(p => !p.lat && !p.lng && !p.sold && !p.descartada);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
+      {/* Header */}
+      <div style={{ background: "var(--bg)", borderBottom: "1px solid var(--border)", padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+          Casa<span style={{ color: "var(--inkMid)" }}>Finder</span>
+        </div>
+        <div style={{ fontSize: 13, color: "var(--inkMid)" }}>Mapa de situación</div>
+        <button onClick={onClose} style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)", color: "var(--inkMid)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+          <svg viewBox="0 0 24 24" style={{ width: 13, height: 13, fill: "none", stroke: "currentColor", strokeWidth: 2 }}><path d="M18 6L6 18M6 6l12 12"/></svg>
+          Volver
+        </button>
+      </div>
+      {/* Body */}
+      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+        {/* Sidebar */}
+        <div style={{ width: 240, borderRight: "1px solid var(--border)", display: "flex", flexDirection: "column", flexShrink: 0 }}>
+          <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border)", fontSize: 11, fontWeight: 600, color: "var(--inkMid)", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            {active.length} viviendas en mapa
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {active.map(p => (
+              <div key={p.id} onClick={() => flyTo(p)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 12px", borderBottom: "1px solid var(--borderSoft)", cursor: "pointer" }}
+                onMouseEnter={e => e.currentTarget.style.background = "#f8f8f6"}
+                onMouseLeave={e => e.currentTarget.style.background = ""}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: p.displayRank === 1 ? "var(--amber)" : "var(--ink)", color: "white", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  #{p.displayRank}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title || "Sin título"}</div>
+                  <div style={{ fontSize: 10, color: "var(--inkMid)" }}>{p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}</div>
+                  {p.distanciaKm ? <div style={{ fontSize: 10, color: "var(--green)", fontWeight: 600 }}>{p.distanciaKm} km al trabajo</div> : null}
+                </div>
+              </div>
+            ))}
+            {noCoords.length > 0 && (
+              <div style={{ padding: "8px 12px", fontSize: 10, color: "var(--inkFaint)", borderTop: "1px solid var(--borderSoft)" }}>
+                {noCoords.length} vivienda{noCoords.length > 1 ? "s" : ""} sin ubicación en mapa
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Map */}
+        <div ref={mapRef} style={{ flex: 1 }} />
+      </div>
+    </div>
+  );
+}
+
+
 export default function App() {
   const [props, setProps] = useState([]);
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
   const [loaded, setLoaded] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [showMap, setShowMap] = useState(false);
   const [showCrit, setShowCrit] = useState(false);
   const [showCompare, setShowCompare] = useState(false);
   const [detail, setDetail] = useState(null);
@@ -1789,6 +1967,11 @@ export default function App() {
           style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--inkMid)", fontSize: 12 }}>
           ⚙ Criterios
         </button>
+        <button className="btn btn-ghost btn-sm" onClick={() => setShowMap(true)}
+          style={{ background: "var(--bg)", border: "1px solid var(--border)", color: "var(--inkMid)", fontSize: 12 }}>
+          <svg viewBox="0 0 24 24" style={{ width: 13, height: 13, fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "butt", strokeLinejoin: "miter", marginRight: 4 }}><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Mapa
+        </button>
         <button className="btn btn-sm" onClick={() => { setEditing(null); setShowAdd(true); }}
           style={{ background: "var(--accent)", color: "white", fontWeight: 600, border: "1px solid var(--accent)" }}>
           + Añadir
@@ -1840,7 +2023,7 @@ export default function App() {
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div style={{ fontSize: 18, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(p.comunidad), lineHeight: 1 }}>
-                        {p.comunidad > 0 ? p.comunidad + " €" : "?"}
+                        {p.comunidad > 0 ? p.comunidad + " €" : "150 €*"}
                       </div>
                       <div style={{ fontSize: 9, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 1 }}>comunidad</div>
                     </div>
@@ -1928,6 +2111,7 @@ export default function App() {
 
       {showAdd && <PropertyModal key={editing ? editing.id : "new"} prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
       {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
+      {showMap && <MapModal props={rankedVisible} onClose={() => setShowMap(false)} onOpenDetail={setDetail} />}
       {showCompare && <CompareModal props={props} criteria={criteria} rankMap={rankMap} onClose={() => setShowCompare(false)} />}
       {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} />}
     </>
