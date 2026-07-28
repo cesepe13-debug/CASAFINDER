@@ -5,6 +5,30 @@ import { collection, doc, onSnapshot, setDoc, deleteDoc } from "firebase/firesto
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CURRENT_YEAR = new Date().getFullYear();
 
+const ZONE_COORDS = {
+  "Marbella": [36.5101, -4.8823],
+  "Nueva Andalucía": [36.4989, -4.9523],
+  "Puerto Banús": [36.4869, -4.9764],
+  "Las Chapas": [36.5031, -4.7389],
+  "Elviria": [36.4997, -4.7656],
+  "San Pedro de Alcántara": [36.4861, -4.9944],
+  "Guadalmina": [36.4817, -5.0167],
+  "Cancelada": [36.4756, -5.0583],
+  "Estepona": [36.4269, -5.1461],
+  "Selwo": [36.4561, -5.0789],
+  "Ojén": [36.5633, -4.8553],
+  "Benahavís": [36.5253, -5.0483],
+  "Istán": [36.5792, -4.9681],
+  "Mijas": [36.5961, -4.6378],
+  "Mijas Costa": [36.5005, -4.7811],
+  "Fuengirola": [36.5397, -4.6247],
+  "Benalmádena": [36.5983, -4.5169],
+  "Torremolinos": [36.6211, -4.4997],
+  "Málaga capital": [36.7213, -4.4214],
+  "Manilva": [36.3758, -5.2247],
+  "Sabinillas": [36.3833, -5.2108],
+};
+
 const ZONE_DISTANCES = {
   "Marbella": 1, "Nueva Andalucía": 4, "Puerto Banús": 6, "Las Chapas": 10,
   "Elviria": 8, "San Pedro de Alcántara": 12, "Guadalmina": 14, "Cancelada": 18,
@@ -1647,16 +1671,19 @@ function MapModal({ props, onClose, onOpenDetail }) {
       const scored = [...props].filter(p => !p.sold && !p.descartada);
 
       active.forEach(p => {
+        const coords = getCoords(p);
+        if (!coords) return;
         const rank = p.displayRank;
         const isFirst = rank === 1;
         const color = isFirst ? "#A87B1F" : "#252627";
         const size = isFirst ? 36 : 30;
+        const approx = !p.lat || !p.lng;
         const icon = L.divIcon({
           className: "",
-          html: `<div style="width:${size}px;height:${size}px;background:${color};color:white;border:2.5px solid white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Outfit,sans-serif;font-size:${isFirst?13:11}px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer">#${rank}</div>`,
+          html: `<div style="width:${size}px;height:${size}px;background:${color};color:white;border:2.5px solid ${approx?"#aaa":"white"};border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:Outfit,sans-serif;font-size:${isFirst?13:11}px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,0.25);cursor:pointer;opacity:${approx?0.75:1}">#${rank}</div>`,
           iconSize: [size, size], iconAnchor: [size/2, size/2]
         });
-        const marker = L.marker([p.lat, p.lng], { icon }).addTo(map);
+        const marker = L.marker(coords, { icon }).addTo(map);
         markersRef.current[p.id] = marker;
 
         const km = p.distanciaKm ? p.distanciaKm + " km al trabajo" : "";
@@ -1666,7 +1693,7 @@ function MapModal({ props, onClose, onOpenDetail }) {
             <div style="font-size:13px;font-weight:700;color:#252627;margin-bottom:2px;line-height:1.3">${p.title || "Sin título"}</div>
             <div style="font-size:11px;color:#8A716A;margin-bottom:6px">${p.zone || ""}</div>
             <div style="font-size:15px;font-weight:700;color:#252627">${p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}</div>
-            ${km ? `<div style="font-size:11px;color:#0E7C66;font-weight:600;margin-top:4px">📍 ${km}</div>` : ""}
+            ${km ? `<div style="font-size:11px;color:#0E7C66;font-weight:600;margin-top:4px">📍 ${km}</div>` : ""}${approx ? `<div style="font-size:10px;color:#A87B1F;margin-top:3px">⚠ Ubicación aproximada por zona</div>` : ""}
             <button onclick="window.__cfOpenDetail('${p.id}')" style="display:block;width:100%;margin-top:8px;padding:6px;background:#252627;color:white;border:none;border-radius:5px;font-family:Outfit,sans-serif;font-size:11px;font-weight:600;cursor:pointer">Ver ficha</button>
           </div>
         `);
@@ -1698,15 +1725,27 @@ function MapModal({ props, onClose, onOpenDetail }) {
   }, []);
 
   const flyTo = (p) => {
-    if (mapInstanceRef.current && p.lat && p.lng) {
-      mapInstanceRef.current.setView([p.lat, p.lng], 15);
+    const coords = getCoords(p);
+    if (mapInstanceRef.current && coords) {
+      mapInstanceRef.current.setView(coords, p.lat && p.lng ? 16 : 13);
       markersRef.current[p.id]?.openPopup();
     }
   };
 
-  const active = props.filter(p => p.lat && p.lng && !p.sold && !p.descartada)
+  const getCoords = (p) => {
+    if (p.lat && p.lng) return [p.lat, p.lng];
+    const zc = ZONE_COORDS[p.zone];
+    if (zc) {
+      // Slight random offset so overlapping zone props don't stack exactly
+      const seed = (p.id || "").charCodeAt(0) || 0;
+      return [zc[0] + (seed % 7 - 3) * 0.002, zc[1] + (seed % 5 - 2) * 0.003];
+    }
+    return null;
+  };
+  const active = props
+    .filter(p => !p.sold && !p.descartada && getCoords(p))
     .sort((a, b) => (a.displayRank || 99) - (b.displayRank || 99));
-  const noCoords = props.filter(p => !p.lat && !p.lng && !p.sold && !p.descartada);
+  const noCoords = props.filter(p => !p.sold && !p.descartada && !getCoords(p));
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
@@ -2113,7 +2152,7 @@ export default function App() {
       {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
       {showMap && <MapModal props={rankedVisible} onClose={() => setShowMap(false)} onOpenDetail={setDetail} />}
       {showCompare && <CompareModal props={props} criteria={criteria} rankMap={rankMap} onClose={() => setShowCompare(false)} />}
-      {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} />}
+      {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={detail.displayRank} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} />}
     </>
   );
 }
