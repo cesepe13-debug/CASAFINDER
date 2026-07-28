@@ -945,6 +945,29 @@ function PropertyModal({ prop, onSave, onClose }) {
   };
   const antiguedad = form.anoConstruccion > 1900 ? CURRENT_YEAR - form.anoConstruccion : null;
 
+  if (showMapPicker) return (
+    <MapPickerModal
+      initialLat={form.lat} initialLng={form.lng}
+      onConfirm={async (lat, lng) => {
+        s("lat", lat); s("lng", lng);
+        try {
+          const DEST_LAT = 36.51115, DEST_LNG = -4.88237;
+          const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${DEST_LNG},${DEST_LAT}?overview=false`;
+          const r = await fetch(url);
+          const d = await r.json();
+          if (d.routes && d.routes[0]) {
+            const km = Math.round(d.routes[0].distance / 100) / 10;
+            const mins = Math.round(d.routes[0].duration / 60);
+            s("distanciaKm", km);
+            s("tiempoMin", mins);
+          }
+        } catch(e) {}
+        setShowMapPicker(false);
+      }}
+      onClose={() => setShowMapPicker(false)}
+    />
+  );
+
   return (
     <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && onClose()}>
       <div className="modal-box">
@@ -1835,30 +1858,6 @@ function MapModal({ props, onClose, onOpenDetail }) {
     .filter(p => !p.sold && !p.descartada && getCoords(p))
     .sort((a, b) => (a.displayRank || 99) - (b.displayRank || 99));
   const noCoords = props.filter(p => !p.sold && !p.descartada && !getCoords(p));
-
-  if (showMapPicker) return (
-    <MapPickerModal
-      initialLat={form.lat} initialLng={form.lng}
-      onConfirm={async (lat, lng) => {
-        s("lat", lat); s("lng", lng);
-        // Calculate road distance and time via OSRM
-        try {
-          const DEST_LAT = 36.51115, DEST_LNG = -4.88237;
-          const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${DEST_LNG},${DEST_LAT}?overview=false`;
-          const r = await fetch(url);
-          const d = await r.json();
-          if (d.routes && d.routes[0]) {
-            const km = Math.round(d.routes[0].distance / 100) / 10;
-            const mins = Math.round(d.routes[0].duration / 60);
-            s("distanciaKm", km);
-            s("tiempoMin", mins);
-          }
-        } catch(e) {}
-        setShowMapPicker(false);
-      }}
-      onClose={() => setShowMapPicker(false)}
-    />
-  );
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
