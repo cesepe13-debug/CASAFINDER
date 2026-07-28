@@ -729,7 +729,7 @@ function printPDF(prop, pts, rank) {
       <div>
       <div class="sec">Características</div>
       <div class="tags">${tags.map(([k,lbl]) => "<span class=\"tag\">" + (SVGS[k]||"") + " " + lbl + "</span>").join("")}</div>
-      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>"<span class=\"tag\">" + (SVGS.vistas||"") + " " + v + "</span>").join("").join("")}</div>` : ""}
+      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>"<span class=\"tag\">" + (SVGS.vistas||"") + " " + v + "</span>").join("")}</div>` : ""}
       </div>
       <div>
       <div class="sec">Pros y contras</div>
