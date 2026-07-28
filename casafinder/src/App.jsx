@@ -508,7 +508,7 @@ function printPDF(prop, pts, rank) {
   if (prop.ascensor) pros.push("Con ascensor");
   if (prop.terraza) pros.push("Con terraza");
   if (prop.aireCond) pros.push("Aire acondicionado");
-  if (prop.distanciaKm > 0 && prop.distanciaKm <= 30) pros.push(prop.distanciaKm + " km al trabajo");
+  if (prop.distanciaKm > 0 && prop.distanciaKm <= 30) pros.push(prop.distanciaKm + " km al trabajo" + (prop.tiempoMin ? " (~" + prop.tiempoMin + " min)" : ""));
   (prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => pros.push(l));
   if (prop.otrosPros) pros.push(prop.otrosPros);
 
@@ -722,7 +722,7 @@ function printPDF(prop, pts, rank) {
     ${prop.bathrooms > 0 ? `<div class="stat"><div class="stat-v">${prop.bathrooms}</div><div class="stat-l">Baños</div></div>` : ""}
     ${prop.planta ? `<div class="stat"><div class="stat-v">${prop.planta}</div><div class="stat-l">Planta</div></div>` : ""}
     ${prop.orientacion ? `<div class="stat"><div class="stat-v">${prop.orientacion}</div><div class="stat-l">Orient.</div></div>` : ""}
-    ${prop.distanciaKm > 0 ? `<div class="stat"><div class="stat-v">${prop.distanciaKm} km</div><div class="stat-l">Al trabajo</div></div>` : ""}
+    ${prop.distanciaKm > 0 ? `<div class="stat"><div class="stat-v">${prop.distanciaKm} km${prop.tiempoMin ? " · ~" + prop.tiempoMin + " min" : ""}</div><div class="stat-l">Al trabajo</div></div>` : ""}
   </div>
 
   <div class="two-col">
@@ -793,6 +793,104 @@ function printPDF(prop, pts, rank) {
 
 
 // ── PropertyModal ─────────────────────────────────────────────────────────────
+// ── MapPickerModal ────────────────────────────────────────────────────────────
+function MapPickerModal({ initialLat, initialLng, onConfirm, onClose }) {
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null);
+  const [selected, setSelected] = useState(
+    initialLat && initialLng ? { lat: initialLat, lng: initialLng } : null
+  );
+
+  useEffect(() => {
+    const loadLeaflet = (cb) => {
+      if (window.L) return cb();
+      const s = document.createElement("script");
+      s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.onload = cb;
+      document.head.appendChild(s);
+    };
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css";
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    loadLeaflet(() => {
+      if (mapInstanceRef.current) return;
+      const L = window.L;
+      const center = initialLat && initialLng ? [initialLat, initialLng] : [36.510, -4.882];
+      const zoom = initialLat && initialLng ? 16 : 13;
+      const map = L.map(mapRef.current).setView(center, zoom);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors", maxZoom: 19
+      }).addTo(map);
+      mapInstanceRef.current = map;
+
+      // Destination marker
+      const destIcon = L.divIcon({
+        className: "",
+        html: '<div style="width:12px;height:12px;background:#0E7C66;border:2px solid white;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>',
+        iconSize: [12,12], iconAnchor: [6,6]
+      });
+      L.marker([36.51115, -4.88237], { icon: destIcon }).addTo(map)
+        .bindTooltip("Calle Mercado 8 (trabajo)", { permanent: false, direction: "right" });
+
+      // Pin icon
+      const makePinIcon = () => L.divIcon({
+        className: "",
+        html: '<div style="position:relative"><div style="width:20px;height:20px;background:#252627;border:2.5px solid white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div><div style="position:absolute;top:18px;left:50%;transform:translateX(-50%);width:2px;height:8px;background:#252627"></div></div>',
+        iconSize: [20,28], iconAnchor: [10,28]
+      });
+
+      // If editing existing location, show existing marker
+      if (initialLat && initialLng) {
+        markerRef.current = L.marker([initialLat, initialLng], { icon: makePinIcon() }).addTo(map);
+      }
+
+      // Click to place/move marker
+      map.on("click", (e) => {
+        const { lat, lng } = e.latlng;
+        if (markerRef.current) {
+          markerRef.current.setLatLng(e.latlng);
+        } else {
+          markerRef.current = L.marker(e.latlng, { icon: makePinIcon() }).addTo(map);
+        }
+        setSelected({ lat, lng });
+      });
+    });
+    return () => {
+      if (mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
+    };
+  }, []);
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(37,38,39,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 600 }}>
+      <div style={{ background: "var(--bg)", borderRadius: "var(--radius)", width: 680, height: 520, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 8px 32px rgba(37,38,39,0.2)" }}>
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>Selecciona la ubicación de la vivienda</div>
+          <div style={{ fontSize: 11, color: "var(--inkMid)" }}>Haz clic en el mapa para marcar la posición exacta</div>
+        </div>
+        <div ref={mapRef} style={{ flex: 1 }} />
+        <div style={{ padding: "10px 16px", borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, flexShrink: 0, background: "rgba(37,38,39,0.02)" }}>
+          <div style={{ flex: 1, fontSize: 11, color: selected ? "var(--green)" : "var(--inkFaint)", fontWeight: selected ? 600 : 400 }}>
+            {selected ? `📍 ${selected.lat.toFixed(5)}, ${selected.lng.toFixed(5)}` : "Haz clic en el mapa para marcar la posición"}
+          </div>
+          <button onClick={onClose} style={{ padding: "7px 14px", border: "1px solid var(--border)", borderRadius: 6, background: "var(--bg)", color: "var(--inkMid)", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}>
+            Cancelar
+          </button>
+          <button onClick={() => selected && onConfirm(selected.lat, selected.lng)} disabled={!selected}
+            style={{ padding: "7px 14px", border: "none", borderRadius: 6, background: selected ? "var(--ink)" : "var(--inkFaint)", color: "white", fontSize: 12, fontWeight: 600, cursor: selected ? "pointer" : "not-allowed", fontFamily: "inherit" }}>
+            ✓ Confirmar ubicación
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 function PropertyModal({ prop, onSave, onClose }) {
   const blank = {
     title: "", url: "", address: "", zone: "", price: 0, sizeUtil: 0, sizeConstruida: 0,
@@ -804,11 +902,12 @@ function PropertyModal({ prop, onSave, onClose }) {
     visitada: false, fechaVisita: "", personaVisita: "", otrosPros: "", otrosContras: "", descartada: false,
     vistas: [], tipoInmueble: "", planta: "", orientacion: "",
     distanciaKm: 0, comunidad: 0, ibi: 0, vrc: 0, inmobiliaria: "", notes: "",
-    enviadaLaure: false, photos: [], mapAddress: "", lat: null, lng: null,
+    enviadaLaure: false, photos: [], mapAddress: "", lat: null, lng: null, tiempoMin: null,
   };
   const cleanVal = (v) => v === undefined ? null : v;
   const cleanProp = prop ? Object.fromEntries(Object.entries({ ...blank, ...prop, photos: prop.photos || [] }).map(([k,v]) => [k, v === undefined ? blank[k] : v])) : blank;
   const [form, setForm] = useState(prop ? cleanProp : blank);
+  const [showMapPicker, setShowMapPicker] = useState(false);
   const [urlInput, setUrlInput] = useState(prop?.url || "");
   const [pastedText, setPastedText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -896,27 +995,17 @@ function PropertyModal({ prop, onSave, onClose }) {
               <div style={{ marginTop: 8 }}>{txtField("Dirección", "address", "C/ …")}</div>
               <div style={{ marginTop: 8 }}>
                 <label className="label">Ubicación exacta en mapa</label>
-                <div style={{ display: "flex", gap: 6 }}>
-                  <input type="text" value={form.mapAddress || ""} onChange={e => s("mapAddress", e.target.value)}
-                    placeholder="Ej: Calle Jacinto Benavente 3, Marbella"
-                    style={{ flex: 1, padding: "7px 10px", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12, fontFamily: "inherit" }} />
-                  <button type="button" onClick={async () => {
-                    const q = form.mapAddress || (form.address + ", " + form.zone + ", Málaga");
-                    if (!q.trim()) return;
-                    try {
-                      const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&q=" + encodeURIComponent(q) + "&limit=1");
-                      const d = await r.json();
-                      if (d[0]) {
-                        s("lat", parseFloat(d[0].lat));
-                        s("lng", parseFloat(d[0].lon));
-                        alert("✓ Ubicación encontrada: " + d[0].display_name.split(",").slice(0,2).join(","));
-                      } else { alert("No se encontró la dirección. Prueba a ser más específico."); }
-                    } catch(e) { alert("Error de geocodificación: " + e.message); }
-                  }} style={{ padding: "7px 12px", background: "var(--ink)", color: "white", border: "none", borderRadius: 6, fontSize: 12, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap" }}>
-                    📍 Localizar
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  {form.lat && form.lng
+                    ? <span style={{ flex: 1, fontSize: 11, color: "var(--green)", fontWeight: 500 }}>✓ Ubicación marcada ({form.lat.toFixed(4)}, {form.lng.toFixed(4)})</span>
+                    : <span style={{ flex: 1, fontSize: 11, color: "var(--inkFaint)" }}>Sin ubicación — pulsa el botón para marcarla en el mapa</span>
+                  }
+                  <button type="button" onClick={() => setShowMapPicker(true)}
+                    style={{ padding: "7px 12px", background: "var(--ink)", color: "white", border: "none", borderRadius: 6, fontSize: 12, fontFamily: "inherit", cursor: "pointer", whiteSpace: "nowrap", display: "flex", alignItems: "center", gap: 5 }}>
+                    <svg viewBox="0 0 24 24" style={{ width: 13, height: 13, fill: "none", stroke: "white", strokeWidth: 2.2, strokeLinecap: "butt", strokeLinejoin: "miter" }}><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7Z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                    {form.lat && form.lng ? "Cambiar ubicación" : "Marcar en mapa"}
                   </button>
                 </div>
-                {form.lat && form.lng && <div style={{ fontSize: 11, color: "var(--green)", marginTop: 4 }}>✓ Ubicación guardada ({form.lat.toFixed(4)}, {form.lng.toFixed(4)})</div>}
               </div>
 
               <div className="sec">Identificación</div>
@@ -1686,7 +1775,7 @@ function MapModal({ props, onClose, onOpenDetail }) {
         const marker = L.marker(coords, { icon }).addTo(map);
         markersRef.current[p.id] = marker;
 
-        const km = p.distanciaKm ? p.distanciaKm + " km al trabajo" : "";
+        const km = p.distanciaKm ? p.distanciaKm + " km" + (p.tiempoMin ? " · ~" + p.tiempoMin + " min" : "") + " al trabajo" : "";
         marker.bindPopup(`
           <div style="font-family:Outfit,sans-serif;min-width:180px">
             <div style="font-size:10px;font-weight:700;color:#8A716A;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:2px">Ranking #${rank}</div>
@@ -1747,6 +1836,30 @@ function MapModal({ props, onClose, onOpenDetail }) {
     .sort((a, b) => (a.displayRank || 99) - (b.displayRank || 99));
   const noCoords = props.filter(p => !p.sold && !p.descartada && !getCoords(p));
 
+  if (showMapPicker) return (
+    <MapPickerModal
+      initialLat={form.lat} initialLng={form.lng}
+      onConfirm={async (lat, lng) => {
+        s("lat", lat); s("lng", lng);
+        // Calculate road distance and time via OSRM
+        try {
+          const DEST_LAT = 36.51115, DEST_LNG = -4.88237;
+          const url = `https://router.project-osrm.org/route/v1/driving/${lng},${lat};${DEST_LNG},${DEST_LAT}?overview=false`;
+          const r = await fetch(url);
+          const d = await r.json();
+          if (d.routes && d.routes[0]) {
+            const km = Math.round(d.routes[0].distance / 100) / 10;
+            const mins = Math.round(d.routes[0].duration / 60);
+            s("distanciaKm", km);
+            s("tiempoMin", mins);
+          }
+        } catch(e) {}
+        setShowMapPicker(false);
+      }}
+      onClose={() => setShowMapPicker(false)}
+    />
+  );
+
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 500, display: "flex", flexDirection: "column", background: "var(--bg)" }}>
       {/* Header */}
@@ -1778,7 +1891,7 @@ function MapModal({ props, onClose, onOpenDetail }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.title || "Sin título"}</div>
                   <div style={{ fontSize: 10, color: "var(--inkMid)" }}>{p.price ? Number(p.price).toLocaleString("es-ES") + " €" : "—"}</div>
-                  {p.distanciaKm ? <div style={{ fontSize: 10, color: "var(--green)", fontWeight: 600 }}>{p.distanciaKm} km al trabajo</div> : null}
+                  {p.distanciaKm ? <div style={{ fontSize: 10, color: "var(--green)", fontWeight: 600 }}>{p.distanciaKm} km{p.tiempoMin ? " · ~" + p.tiempoMin + " min" : ""} al trabajo</div> : null}
                 </div>
               </div>
             ))}
