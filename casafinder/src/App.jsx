@@ -250,7 +250,7 @@ const css = `
   .tag-win{background:#111;color:white;border-color:#111}
   .prop-card{background:var(--bg);border-radius:var(--radius);border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.15s,transform 0.15s;position:relative;overflow:hidden}
   .prop-card:hover{box-shadow:var(--shMd);transform:translateY(-1px)}
-  .rank-num{position:absolute;top:10px;left:10px;width:22px;height:22px;border-radius:50%;background:var(--ink);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1;font-family:'Outfit',sans-serif}
+  .rank-num{position:absolute;top:10px;left:10px;min-width:28px;height:28px;padding:0 6px;border-radius:14px;background:var(--ink);color:white;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1;font-family:'Outfit',sans-serif}
   .score-ring{position:relative;flex-shrink:0}
   .score-ring svg{display:block}
   .score-ring .sval{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -466,6 +466,7 @@ function printPDF(prop, pts, rank) {
   if (prop.ascensor) pros.push("Con ascensor");
   if (prop.terraza) pros.push("Con terraza");
   if (prop.aireCond) pros.push("Aire acondicionado");
+  if (prop.distanciaKm > 0 && prop.distanciaKm <= 30) pros.push(prop.distanciaKm + " km al trabajo");
   (prop.cocinaPositivos || []).map(v => COCINA_POSITIVOS.find(x => x.val === v)?.label).filter(Boolean).forEach(l => pros.push(l));
   if (prop.otrosPros) pros.push(prop.otrosPros);
 
@@ -473,7 +474,7 @@ function printPDF(prop, pts, rank) {
   const contras = [];
   if (usaVrc) contras.push("VRC superior al precio → ITP mayor");
   if (prop.orientacion === "Norte") contras.push("Orientación Norte");
-  if (prop.distanciaKm > 20) contras.push(prop.distanciaKm + " km al trabajo");
+  if (prop.distanciaKm > 30) contras.push(prop.distanciaKm + " km al trabajo");
   if (prop.planta === "Bajo") contras.push("Planta baja");
   if (["E","F","G"].includes(prop.certEnergetico)) contras.push("Cert. energético " + prop.certEnergetico + " (eficiencia baja)");
   if (!prop.trastero) contras.push("Sin trastero");
@@ -516,7 +517,7 @@ function printPDF(prop, pts, rank) {
     const ibiAnual = ibiEstimado ? Math.round(precio * 0.0025) : (prop.ibi || 0);
     const ibiMes = Math.round(ibiAnual / 12);
     const comunidadEstimada = (prop.comunidad || 0) === 0;
-    const comunidadMes = comunidadEstimada ? 130 : (prop.comunidad || 0);
+    const comunidadMes = comunidadEstimada ? 150 : (prop.comunidad || 0);
     const esfuerzo20 = cuota20 + segurosMes + ibiMes + comunidadMes;
     const esfuerzo15 = cuota15 + segurosMes + ibiMes + comunidadMes;
     const itpRow = vrc > precio
@@ -582,7 +583,7 @@ function printPDF(prop, pts, rank) {
             + "<tr style=\"background:#fef2f2\"><td style=\"padding:6px 8px;color:#991b1b;font-weight:600\">Rebaja necesaria</td><td style=\"padding:6px 8px;text-align:right;font-weight:700;color:#991b1b\">-" + fmtC(rebaja) + " (" + pctRebaja + "% de descuento)</td></tr>";
         })()
       + "</table>"
-      + ((ibiEstimado || comunidadEstimada) ? "<div style=\"margin-top:10px;background:#F3E9D4;border:1px solid rgba(168,123,31,0.3);border-radius:6px;padding:7px 10px;font-size:10px;color:#A87B1F;line-height:1.5\"><strong>⚠ Valores estimados:</strong> " + (ibiEstimado ? "IBI (0,25% precio anual). " : "") + (comunidadEstimada ? "Comunidad (130 €/mes media zona). " : "") + "Introdúcelos en la ficha para cálculos exactos.</div>" : "")
+      + ((ibiEstimado || comunidadEstimada) ? "<div style=\"margin-top:10px;background:#F3E9D4;border:1px solid rgba(168,123,31,0.3);border-radius:6px;padding:7px 10px;font-size:10px;color:#A87B1F;line-height:1.5\"><strong>⚠ Valores estimados:</strong> " + (ibiEstimado ? "IBI (0,25% precio anual). " : "") + (comunidadEstimada ? "Comunidad (150 €/mes media zona). " : "") + "Introdúcelos en la ficha para cálculos exactos.</div>" : "")
       + "<div style=\"font-size:10px;color:#aaa;margin-top:8px;line-height:1.4\">Cálculo orientativo. Seguros estimados: 300€/año hogar + 600€/año vida. Sueldo de referencia: 2.600€/mes. Consulta tu banco para condiciones reales.</div>"
       + "</div>";
   })();
@@ -665,7 +666,7 @@ function printPDF(prop, pts, rank) {
       ${usaVrc ? `<div class="price-warn">⚠ VRC: ${Number(prop.vrc).toLocaleString("es-ES")} € → ITP real: ${itpReal} (+${Math.round((prop.vrc - prop.price) * 0.07).toLocaleString("es-ES")} € extra)</div>` : ""}
     </div>
     <div class="price-right">
-      <div class="com-val" style="color:${prop.comunidad <= 130 ? "#1a5c3a" : prop.comunidad <= 160 ? "#e07b00" : "#991b1b"}">${prop.comunidad > 0 ? prop.comunidad + " €" : "?"}</div>
+      <div class="com-val" style="color:${prop.comunidad <= 130 ? "#1a5c3a" : prop.comunidad <= 160 ? "#e07b00" : "#991b1b"}">${prop.comunidad > 0 ? prop.comunidad + " €" : "150 €* (est.)"}</div>
       <div class="com-lbl">Comunidad / mes</div>
       ${prop.ibi ? `<div class="ibi-val">IBI: ${Number(prop.ibi).toLocaleString("es-ES")} €/año</div>` : ""}
     </div>
@@ -690,7 +691,7 @@ function printPDF(prop, pts, rank) {
           ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
-          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + prop.certEnergetico + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
+          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + (certKey || prop.certEnergetico) + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
           ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
@@ -704,7 +705,6 @@ function printPDF(prop, pts, rank) {
           (prop.personaVisita ? "<div class=\"dr\"><div class=\"dl\">Agente</div><div class=\"dv\">" + prop.personaVisita + "</div></div>" : "")
         ) : ""}
       </div>
-      ${certDesc ? `<div style="margin-top:8px;background:#f0f0ee;border-left:3px solid #888;padding:8px 12px;font-size:11px;color:#555;line-height:1.5"><strong>Calificación ${certKey}:</strong> ${certDesc}</div>` : ""}
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div>
@@ -1218,7 +1218,7 @@ function CompareModal({ props, criteria, rankMap, onClose }) {
     { label: "Baños", get: p => p.bathrooms || "—", compare: "higher", num: p => p.bathrooms },
     { label: "Planta", get: p => p.planta || "—", compare: "custom", num: p => PLANTA_ORDER[p.planta] ?? -1, criterionId: "planta" },
     { label: "Orientación", get: p => p.orientacion || "—", compare: "custom", num: p => ORIENTACION_SCORE[p.orientacion] ?? -1, criterionId: "orientacion" },
-    { label: "Comunidad", get: p => p.comunidad ? Number(p.comunidad).toLocaleString("es-ES") + " €/mes" : "—", compare: "lower", num: p => p.comunidad || 9999, criterionId: "comunidad" },
+    { label: "Comunidad", get: p => p.comunidad ? Number(p.comunidad).toLocaleString("es-ES") + " €/mes" : "150 €/mes (est.)", compare: "lower", num: p => p.comunidad || 9999, criterionId: "comunidad" },
     { label: "IBI", get: p => p.ibi ? Number(p.ibi).toLocaleString("es-ES") + " €/año" : "—", compare: "lower", num: p => p.ibi || 9999, criterionId: "ibi" },
     { label: "VRC", get: p => p.vrc>0 ? Number(p.vrc).toLocaleString("es-ES")+" €"+(p.vrc>p.price?" ⚠":"") : "—", compare: "none" },
     { label: "ITP real (7%)", get: p => p.price>0 ? Number(Math.round(Math.max(p.price,p.vrc||0)*0.07)).toLocaleString("es-ES")+" €" : "—", compare: "lower", num: p => p.price>0 ? Math.round(Math.max(p.price,p.vrc||0)*0.07) : 9999 },
@@ -1413,7 +1413,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
               </div>
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
-                  {prop.comunidad > 0 ? prop.comunidad + " €" : "?"}
+                  {prop.comunidad > 0 ? prop.comunidad + " €" : "150 €* (est.)"}
                 </div>
                 <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>comunidad/mes</div>
               </div>
@@ -1432,6 +1432,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
             <Cell label="Orientación" val={prop.orientacion} />
             <Cell label="Dist. trabajo" val={prop.distanciaKm > 0 ? prop.distanciaKm + " km" : null} />
 
+            <Cell label="Comunidad" val={prop.comunidad > 0 ? Number(prop.comunidad).toLocaleString("es-ES") + " €/mes" : "150 €/mes (est.)"} />
             <Cell label="IBI" val={prop.ibi > 0 ? Number(prop.ibi).toLocaleString("es-ES") + " €/año" : null} />
             {prop.vrc > 0 && <>
               <div className="dcell">
@@ -1505,9 +1506,9 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
           {/* Tags */}
           <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginBottom: 12 }}>
             {[["trastero","📦 Trastero"],["garaje","🚗 Garaje"],["piscina","🏊 Piscina"],["aireCond","❄️ A/C"],["ascensor","🛗 Ascensor"],["jardin","🌳 Jardín"],["amueblado","🛋 Amueblado"],["lavadero","🧺 Lavadero"]].map(([k,lbl]) => prop[k] ? <span key={k} className="tag tag-green">{lbl}</span> : null)}
-            {prop.soleria && <span className="tag tag-amber">🪨 {prop.soleria}</span>}
+            {prop.soleria && <span className="tag">{prop.soleria}</span>}
             {prop.terraza && <span className="tag tag-green">🌿 Terraza{prop.numTerrazas > 1 ? ` ×${prop.numTerrazas}` : ""}</span>}
-            {(prop.vistas || []).map(v => <span key={v} className="tag tag-blue">👁 {v}</span>)}
+            {(prop.vistas || []).map(v => <span key={v} className="tag"><svg viewBox="0 0 24 24" style={{width:16,height:16,fill:"none",stroke:"var(--ink)",strokeWidth:2.2,strokeLinecap:"butt",strokeLinejoin:"miter",flexShrink:0}}><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>{v}</span>)}
             {prop.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===prop.estadoBanos); return c?<span className="tag tag-amber">{c.icon} Baños: {c.label}</span>:null; })()}
             {prop.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===prop.estadoCocina); return c?<span className="tag tag-amber">{c.icon} Cocina: {c.label}</span>:null; })()}
             {prop.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===prop.tipoAire); return c?<span className="tag">{c.icon} A/C: {c.label}</span>:null; })()}
@@ -1790,7 +1791,7 @@ export default function App() {
           const m2 = p.sizeUtil || p.sizeConstruida || 0;
           const ratio = m2 && p.price ? Math.round(p.price / m2).toLocaleString("es-ES") + " €/m²" : "";
           return (
-            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold || p.descartada ? 0.7 : 1 }} onClick={() => setDetail(p)}>
+            <div key={p.id} className="prop-card card-enter" style={{ animationDelay: `${i * 0.04}s`, opacity: p.sold || p.descartada ? 0.7 : 1, boxShadow: rank === 1 ? "0 0 0 2.5px #A87B1F, 0 4px 16px rgba(168,123,31,0.2)" : undefined }} onClick={() => setDetail(p)}>
               <div className="rank-num">#{rank}</div>
               {p.sold && <div className="sold-overlay"><div className="sold-x">SOLD</div></div>}
               {p.descartada && !p.sold && <div className="descartada-overlay"><div className="descartada-label">Descartada</div></div>}
@@ -1851,11 +1852,11 @@ export default function App() {
                     ["ascensor",<svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 10l3-3 3 3"/><path d="M9 14l3 3 3-3"/></svg>,"Ascensor"],
                     ["lavadero",<svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M6 6h1M9 6h1"/></svg>,"Lavadero"]
                   ].map(([k,e,lbl]) => p[k] ? <span key={k} className="tag tag-green" title={lbl}>{e}</span> : null)}
-                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag tag-amber" title={"Baños: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
-                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag tag-amber" title={"Cocina: "+c.label+" — "+c.desc}>🍳{c.icon}</span>:null; })()}
-                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" title={"A/C: "+c.label+" — "+c.desc}>{c.icon}</span>:null; })()}
+                  {p.estadoBanos && (() => { const c=BANOS_CATS.find(x=>x.val===p.estadoBanos); return c?<span className="tag" title={"Baños: "+c.label}>{c.label}</span>:null; })()}
+                  {p.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===p.estadoCocina); return c?<span className="tag" title={"Cocina: "+c.label}>{c.label}</span>:null; })()}
+                  {p.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===p.tipoAire); return c?<span className="tag" title={"A/C: "+c.label+" — "+c.desc}><svg viewBox="0 0 24 24" style={{width:16,height:16,fill:"none",stroke:"var(--ink)",strokeWidth:2.2,strokeLinecap:"butt",strokeLinejoin:"miter",flexShrink:0}}><rect x="2" y="6" width="20" height="9" rx="2"/><path d="M7 15v4M12 15v4M17 15v4"/><path d="M6 10h12"/></svg></span>:null; })()}
                   {p.soleria && <span className="tag tag-amber" title={"Solería: "+p.soleria}><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8"/><rect x="13" y="3" width="8" height="8"/><rect x="3" y="13" width="8" height="8"/><rect x="13" y="13" width="8" height="8"/></svg></span>}
-                  {p.orientacion && <span className="tag" title={"Orientación: "+p.orientacion}>🧭</span>}
+                  {p.orientacion && <span className="tag" title={"Orientación: "+p.orientacion}><svg viewBox="0 0 24 24" style={{width:16,height:16,fill:"none",stroke:"var(--ink)",strokeWidth:2.2,strokeLinecap:"butt",strokeLinejoin:"miter",flexShrink:0}}><circle cx="12" cy="12" r="10"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg></span>}
                   {(p.vistas||[]).length>0 && <span className="tag tag-blue" title={"Vistas: "+(p.vistas||[]).join(", ")}><svg viewBox="0 0 24 24"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></span>}
                 </div>
                 {p.inmobiliaria && (
