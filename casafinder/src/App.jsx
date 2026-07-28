@@ -1607,11 +1607,11 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
 // ── App ───────────────────────────────────────────────────────────────────────
 // ── MapModal ──────────────────────────────────────────────────────────────────
 function MapModal({ props, onClose, onOpenDetail }) {
-  const mapRef = React.useRef(null);
-  const mapInstanceRef = React.useRef(null);
-  const markersRef = React.useRef({});
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef({});
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Load Leaflet CSS
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
