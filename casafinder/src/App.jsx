@@ -462,7 +462,7 @@ function printPDF(prop, pts, rank) {
     lavadero: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M6 6h1M9 6h1"/></svg>',
     vistas: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
   };
-  const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"],["lavadero","Lavadero"]].filter(([k]) => prop[k]).map(([,l]) => l);
+  const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"],["lavadero","Lavadero"]].filter(([k]) => prop[k]);
   const banosCat = BANOS_CATS.find(c => c.val === prop.estadoBanos);
   const cocinaCat = COCINA_CATS.find(c => c.val === prop.estadoCocina);
   const aireCat = AIRE_CATS.find(c => c.val === prop.tipoAire);
@@ -657,7 +657,7 @@ function printPDF(prop, pts, rank) {
   <div class="header">
     <div style="flex:1;padding-right:16px">
       <div class="logo">CasaFinder · Ficha de propiedad</div>
-      ${prop.inmobiliaria ? `<div style="font-size:11px;font-weight:600;color:#252627;margin:2px 0">${prop.inmobiliaria}</div>` : ""}
+      ${prop.inmobiliaria ? "<div style=\"font-size:11px;font-weight:600;color:#252627;margin:2px 0\">" + prop.inmobiliaria + "</div>" : ""}
       <h1>${prop.title || "Sin título"}</h1>
       <div class="subtitle">${[prop.address, prop.zone].filter(Boolean).join(" · ")}</div>
     </div>
@@ -720,8 +720,8 @@ function printPDF(prop, pts, rank) {
     <div style="display:flex;flex-direction:column;gap:8px">
       <div>
       <div class="sec">Características</div>
-      <div class="tags">${tags.map(t => `<span class="tag tag-g">${t}</span>`).join("")}</div>
-      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag">${IC_VIS} ${v}</span>`).join("")}</div>` : ""}
+      <div class="tags">${tags.map(([k,lbl]) => "<span class=\"tag\">" + (SVGS[k]||"") + " " + lbl + "</span>").join("")}</div>
+      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>"<span class=\"tag\">" + (SVGS.vistas||"") + " " + v + "</span>").join("").join("")}</div>` : ""}
       </div>
       <div>
       <div class="sec">Pros y contras</div>
