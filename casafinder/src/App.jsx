@@ -445,6 +445,7 @@ function Lightbox({ src, photos, onClose }) {
 
 // ── Print PDF ─────────────────────────────────────────────────────────────────
 function printPDF(prop, pts, rank) {
+  try {
   const w = window.open("", "_blank");
   const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
   const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
@@ -751,6 +752,8 @@ function printPDF(prop, pts, rank) {
   </body></html>`);
   w.document.close();
   setTimeout(() => w.print(), 500);
+  } catch(e) { alert("PDF error: " + e.message + "\n" + e.stack); }
+
 }
 
 
