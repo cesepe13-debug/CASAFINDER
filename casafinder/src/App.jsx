@@ -446,7 +446,14 @@ function Lightbox({ src, photos, onClose }) {
 // ── Print PDF ─────────────────────────────────────────────────────────────────
 function printPDF(prop, pts, rank) {
   try {
-  const w = window.open("", "_blank");
+  // Use iframe to avoid popup blocker
+  const existingFrame = document.getElementById("__pdf_frame__");
+  if (existingFrame) existingFrame.remove();
+  const iframe = document.createElement("iframe");
+  iframe.id = "__pdf_frame__";
+  iframe.style.cssText = "position:fixed;top:0;left:0;width:100%;height:100%;z-index:9999;border:none;background:white;";
+  document.body.appendChild(iframe);
+  const w = iframe.contentWindow;
   const m2 = prop.sizeUtil || prop.sizeConstruida || 0;
   const ratio = m2 && prop.price ? Math.round(prop.price / m2).toLocaleString("es-ES") + " €/m²" : "—";
   const base = Math.max(prop.price || 0, prop.vrc || 0);
@@ -751,7 +758,16 @@ function printPDF(prop, pts, rank) {
 
   </body></html>`);
   w.document.close();
-  setTimeout(() => w.print(), 500);
+  // Add close button and print
+  setTimeout(() => {
+    const closeBtn = iframe.contentDocument.createElement("button");
+    closeBtn.textContent = "✕ Cerrar";
+    closeBtn.style.cssText = "position:fixed;top:12px;right:12px;z-index:9999;padding:8px 16px;background:#252627;color:white;border:none;border-radius:6px;font-size:13px;font-family:Outfit,sans-serif;cursor:pointer;";
+    closeBtn.onclick = () => iframe.remove();
+    iframe.contentDocument.body.appendChild(closeBtn);
+    iframe.contentWindow.print();
+    iframe.contentWindow.onafterprint = () => iframe.remove();
+  }, 600);
   } catch(e) { alert("PDF error: " + e.message + "\n" + e.stack); }
 
 }
