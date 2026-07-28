@@ -760,11 +760,6 @@ function printPDF(prop, pts, rank) {
   w.document.close();
   // Add close button and print
   setTimeout(() => {
-    const closeBtn = iframe.contentDocument.createElement("button");
-    closeBtn.textContent = "✕ Cerrar";
-    closeBtn.style.cssText = "position:fixed;top:12px;right:12px;z-index:9999;padding:8px 16px;background:#252627;color:white;border:none;border-radius:6px;font-size:13px;font-family:Outfit,sans-serif;cursor:pointer;";
-    closeBtn.onclick = () => iframe.remove();
-    iframe.contentDocument.body.appendChild(closeBtn);
     iframe.contentWindow.print();
     iframe.contentWindow.onafterprint = () => iframe.remove();
   }, 600);
