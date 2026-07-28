@@ -1488,7 +1488,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
                 <div style={{ fontSize: 26, fontWeight: 700, fontFamily: "Outfit,sans-serif", color: comunidadColor(prop.comunidad), lineHeight: 1 }}>
                   {prop.comunidad > 0 ? prop.comunidad + " €" : "150 €* (est.)"}
                 </div>
-                <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{p.comunidad > 0 ? "comunidad/mes" : "comunidad/mes (est.)"}</div>
+                <div style={{ fontSize: 10, color: "var(--inkFaint)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 2 }}>{prop.comunidad > 0 ? "comunidad/mes" : "comunidad/mes (est.)"}</div>
               </div>
             </div>
             <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
@@ -1586,7 +1586,7 @@ function DetailModal({ prop, scored, rank, onClose, onEdit, onDelete }) {
             {prop.estadoCocina && (() => { const c=COCINA_CATS.find(x=>x.val===prop.estadoCocina); return c?<span className="tag tag-amber">{c.icon} Cocina: {c.label}</span>:null; })()}
             {prop.tipoAire && (() => { const c=AIRE_CATS.find(x=>x.val===prop.tipoAire); return c?<span className="tag">{c.icon} A/C: {c.label}</span>:null; })()}
             {(prop.cocinaPositivos||[]).map(v => { const p=COCINA_POSITIVOS.find(x=>x.val===v); return p?<span key={v} className="tag tag-green">✅ {p.label}</span>:null; })}
-            {(prop.cocinaNegativos||[]).map(v => { const p=COCINA_NEGATIVOS.find(x=>x.val===v); return p?<span key={v} className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)"}}>🔴 {p.label}</span>:null; })}
+            {(prop.cocinaNegativos||[]).map(v => { const p=COCINA_NEGATIVOS.find(x=>x.val===v); return p?<span key={v} className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)"}}>🔴 {c.label}</span>:null; })}
             {prop.otrosPros && <span className="tag tag-green" style={{maxWidth:"100%",whiteSpace:"normal"}}>✅ {prop.otrosPros}</span>}
             {prop.otrosContras && <span className="tag" style={{background:"#fef2f2",borderColor:"#fccfcf",color:"var(--red)",maxWidth:"100%",whiteSpace:"normal"}}>🔴 {prop.otrosContras}</span>}
           </div>
