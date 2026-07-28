@@ -452,6 +452,16 @@ function printPDF(prop, pts, rank) {
   const usaVrc = prop.vrc > prop.price;
   const itpReal = base ? Math.round(base * 0.07).toLocaleString("es-ES") + " €" : "—";
   const itpVenta = prop.price ? Math.round(prop.price * 0.07).toLocaleString("es-ES") + " €" : "—";
+    const SVGS = {
+    trastero: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M3 8l9-5 9 5"/><path d="M9 14h6"/></svg>',
+    garaje: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><path d="M5 17H3V10l2-5h14l2 5v7h-2"/><path d="M5 17a2 2 0 0 0 4 0M15 17a2 2 0 0 0 4 0"/><path d="M3 12h18"/></svg>',
+    terraza: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><path d="M12 3v2M12 19v2M3 12H1M23 12h-2"/><circle cx="12" cy="12" r="4"/></svg>',
+    piscina: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><path d="M2 12c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M2 17c1.5-2 3-2 4.5 0s3 2 4.5 0 3-2 4.5 0 3 2 4.5 0"/><path d="M8 7V3M16 7V3"/></svg>',
+    aireCond: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><rect x="2" y="6" width="20" height="9" rx="2"/><path d="M7 15v4M12 15v4M17 15v4"/><path d="M6 10h12"/></svg>',
+    ascensor: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M9 10l3-3 3 3"/><path d="M9 14l3 3 3-3"/></svg>',
+    lavadero: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><path d="M6 6h1M9 6h1"/></svg>',
+    vistas: '<svg viewBox="0 0 24 24" style="width:13px;height:13px;display:inline-block;vertical-align:middle;fill:none;stroke:#252627;stroke-width:2.2"><path d="M1 12S5 4 12 4s11 8 11 8-4 8-11 8S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg>',
+  };
   const tags = [["trastero","Trastero"],["garaje","Garaje"],["terraza","Terraza"],["piscina","Piscina"],["aireCond","A/C"],["ascensor","Ascensor"],["jardin","Jardín"],["amueblado","Amueblado"],["lavadero","Lavadero"]].filter(([k]) => prop[k]).map(([,l]) => l);
   const banosCat = BANOS_CATS.find(c => c.val === prop.estadoBanos);
   const cocinaCat = COCINA_CATS.find(c => c.val === prop.estadoCocina);
@@ -647,6 +657,7 @@ function printPDF(prop, pts, rank) {
   <div class="header">
     <div style="flex:1;padding-right:16px">
       <div class="logo">CasaFinder · Ficha de propiedad</div>
+      ${prop.inmobiliaria ? `<div style="font-size:11px;font-weight:600;color:#252627;margin:2px 0">${prop.inmobiliaria}</div>` : ""}
       <h1>${prop.title || "Sin título"}</h1>
       <div class="subtitle">${[prop.address, prop.zone].filter(Boolean).join(" · ")}</div>
     </div>
@@ -691,8 +702,8 @@ function printPDF(prop, pts, rank) {
           ["Año constr.", prop.anoConstruccion > 1900 ? prop.anoConstruccion + " (" + (new Date().getFullYear() - prop.anoConstruccion) + " años)" : null],
           ["Solería", prop.soleria ? "🪨 " + prop.soleria : null],
           ["Aire acond.", aireCat ? aireCat.icon + " " + aireCat.label : null],
-          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + (certKey || prop.certEnergetico) + "</b>" + (prop.consumoEnergetico ? " · " + prop.consumoEnergetico + " kWh/m²" : "") + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
-          ["Emisiones", prop.emisionesEnergetico ? prop.emisionesEnergetico + " kg CO₂/m²" : null],
+          ["Cert. energ.", prop.certEnergetico && !["En trámite","No indicado"].includes(prop.certEnergetico) ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[certKey] || "#888") + "\">" + (certKey || "—") + "</b>" + (certDesc ? "<br><small style=\"font-size:9px;color:#666\">" + certDesc + "</small>" : "") : prop.certEnergetico],
+          ["Emisiones", prop.emisionesEnergetico ? "<b style=\"font-size:18px;font-weight:700;color:" + ({"A":"#1a5c3a","B":"#2d8a4e","C":"#e07b00","D":"#e06000","E":"#cc4400","F":"#b83200","G":"#991b1b"}[prop.emisionesEnergetico] || "#888") + "\">" + prop.emisionesEnergetico + "</b>" : null],
           ["Est. baños", banosCat ? banosCat.icon + " " + banosCat.label : null],
           ["Est. cocina", cocinaCat ? cocinaCat.icon + " " + cocinaCat.label : null],
           ["Inmobiliaria", prop.inmobiliaria],
@@ -710,7 +721,7 @@ function printPDF(prop, pts, rank) {
       <div>
       <div class="sec">Características</div>
       <div class="tags">${tags.map(t => `<span class="tag tag-g">${t}</span>`).join("")}</div>
-      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag tag-b">👁 ${v}</span>`).join("")}</div>` : ""}
+      ${(prop.vistas || []).length > 0 ? `<div class="tags">${(prop.vistas||[]).map(v=>`<span class="tag">${IC_VIS} ${v}</span>`).join("")}</div>` : ""}
       </div>
       <div>
       <div class="sec">Pros y contras</div>
@@ -1901,7 +1912,7 @@ export default function App() {
         )}
       </div>
 
-      {showAdd && <PropertyModal prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
+      {showAdd && <PropertyModal key={editing ? editing.id : "new"} prop={editing} onSave={saveProperty} onClose={() => { setShowAdd(false); setEditing(null); }} />}
       {showCrit && <CriteriaModal criteria={criteria} onChange={saveCriteria} onClose={() => setShowCrit(false)} />}
       {showCompare && <CompareModal props={props} criteria={criteria} rankMap={rankMap} onClose={() => setShowCompare(false)} />}
       {detail && <DetailModal prop={detail} scored={calcScore(detail, criteria)} rank={rankMap[detail.id]} onClose={() => setDetail(null)} onEdit={startEdit} onDelete={deleteProperty} />}
